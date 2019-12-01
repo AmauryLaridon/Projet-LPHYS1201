@@ -104,6 +104,7 @@ class Rocket:
         return t_stage
 
     def launch(self, position, environnement):
+        """Définis la séquence de lancement et calcule l'EM"""
         X = convert_init(position, environnement)
         V = initial_velocity(position, environnement)
         Z = [X,Y]
@@ -145,7 +146,10 @@ class Rocket:
 
         return np.array([r,theta,phi])
 
-
+"""----------------------------------EQUATION MOUVEMENT--------------------------------------"""
+    def EM(self, X, Y, environnement):
+        """Définis l'Equation du mouvement de la fusée"""
+        a = (P - Ff - G)/M_var
 """---------------------------------------AFFICHAGE------------------------------------------"""
     def display(self):
         pass
