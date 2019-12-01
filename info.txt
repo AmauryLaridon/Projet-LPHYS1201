@@ -1,6 +1,6 @@
 ----------------------------
 RÈGLES :
 
-1) Les étages de la fusée doivent être catégorisés avec soit : "booster","étage","payload"
+1) Les étages de la fusée doivent être catégorisés avec soit : "booster","stage","payload"
 2) On ne peut pas avoir des boosters sans avoir un étage attaché à celui-ci
 3) Obligé d'avoir une payload en haut de la fusée
