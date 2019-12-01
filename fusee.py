@@ -2,7 +2,7 @@ import math
 import scipy
 import numpy as np
 
-"""------------------------CLASSE DECRIVANT LES DONNEES D UN ETAGE-----------------------"""
+#--------------------------CLASSE DECRIVANT LES DONNEES D UN ETAGE-----------------------#
 class Stage:
     def __init__(self, type, name, M_empty, M_fuel, P, C_A, C):
         self.type     = type
@@ -12,8 +12,7 @@ class Stage:
         self.C_A      = C_A
         self.C        = C
         self.name     = name
-
-"""--------------------------CLASSE DECRIVANT LA FUSEE UTILISEE---------------------------"""
+#-----------------------------CLASSE DECRIVANT LA FUSEE UTILISEE---------------------------#
 class Rocket:
     def __init__(self):
         self.M        = 0
@@ -22,11 +21,9 @@ class Rocket:
         self.C        = 0
         self.C_boost  = 0
         self.stage    =[]
-
-"""-------------------------------FONCTIONS LIEES A LA FUSEE---------------------------------"""
+#-------------------------------FONCTIONS LIEES A LA FUSEE---------------------------------#
     def add_stage(self, stage_type, stage_name, M_empty, M_fuel, P, C_A, C):
         """ajoute une étage à la fusée en partant de la charge utile (le haut)"""
-
         #test des erreurs possibles
         if len(self.stage) == 0:
             if stage_type != 'payload':
@@ -53,7 +50,7 @@ class Rocket:
         self.reset()
         self.add_stage('payload', 'Module Soyuz', 7000, 0, 0, 2.86, 0)
         self.add_stage('stage', 'Troisième étage', 2250, 25200, 300000, 2.78, 105)
-        self.add_stage('stage', 'Deuxième étage' 6500, 105000, 1000000, 3.42, 350)
+        self.add_stage('stage', 'Deuxième étage', 6500, 105000, 1000000, 3.42, 350)
         self.add_stage('booster', 'Booster', 4*3500, 4*40000, 4*1000000, 4*2.82, 4*333.33)
         print("La fusée est maintenant une fusée Soyuz.")
 
@@ -110,7 +107,7 @@ class Rocket:
         Z = [X,Y]
         self.update()
 
-"""----------------------------------CONVERSIONS COORDONNEES---------------------------------"""
+#----------------------------------CONVERSIONS COORDONNEES---------------------------------#
 
     def convert_init(self, position, environnement):
         """Converti les coordonnées sphériques en coordonnées cartésiennes à l'initialisation"""
@@ -146,10 +143,10 @@ class Rocket:
 
         return np.array([r,theta,phi])
 
-"""----------------------------------EQUATION MOUVEMENT--------------------------------------"""
+#----------------------------------EQUATION MOUVEMENT--------------------------------------#
     def EM(self, X, Y, environnement):
         """Définis l'Equation du mouvement de la fusée"""
         a = (P - Ff - G)/M_var
-"""---------------------------------------AFFICHAGE------------------------------------------"""
+#---------------------------------------AFFICHAGE------------------------------------------#
     def display(self):
         pass
