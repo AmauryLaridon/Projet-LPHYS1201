@@ -95,11 +95,11 @@ class Computer:
     def launch(self, position):
         X = self.convert_init(position)
         V = self.earth_rotation_velocity(position)
-        Z = [X,V]
+        Y = [X,V]
         self.rocket.update()
         for i in range(len(self.rocket.stage)-1):
             T = self.rocket.stage_time()
-            solution = ode.RK45(self.radial_launch, 0, Z, T, vectorized = True)
+            solution = ode.RK45(self.radial_launch, 0, Y, T, vectorized = True)
             print(solution)
 
 

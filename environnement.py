@@ -14,6 +14,7 @@ class Environment :
     def air_density(self, rayon):
         h = rayon - self.r_earth
         exp = 1-self.gk/self.L_B
-        rho = self.rho_0*(self.T_0/(self.T_0-self.L_B*h))**exp
+        rho = self.rho_0*(self.T_0/abs(self.T_0-self.L_B*h))**exp
+
 
         return rho

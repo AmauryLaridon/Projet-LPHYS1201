@@ -88,7 +88,7 @@ class Rocket:
     def launch(self, position, environment):
         X = convert_init(position, environment)
         V = initial_velocity(position, environment)
-        Z = [X,Y]
+        Y = [X,Y]
         self.update()
 
     def decoupling(self):
