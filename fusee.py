@@ -2,6 +2,8 @@ import math
 import scipy
 import numpy as np
 
+from environnement import *
+
 #--------------------------CLASSE DECRIVANT LES DONNEES D UN ETAGE-----------------------#
 class Stage:
     def __init__(self, type, name, M_empty, M_fuel, P, C_A, C):
@@ -45,6 +47,15 @@ class Rocket:
             self.stage.append(new_stage)
             self.M += new_stage.M_empty + new_stage.M_fuel
 
+    def remove_stage(self):
+        """supprime le dernier étage de la fusée. Fonction destinée à l'utilisateur
+           si celui-ci se trompe dans son montage """
+        if len(self.stage) == 0:
+            print("Pour supprimer un étage il faudrait déja qu'il y en ai un.")
+        else:
+            self.M -= self.stage[-1].M_empty + self.stage[-1].M_fuel
+            self.stage.pop()
+
     def create_soyuz(self):
         """Permet de créer directement une fusée de type Soyuz"""
         self.reset()
@@ -76,6 +87,17 @@ class Rocket:
             self.C_A     = self.stage[-1].C_A
             self.C       = self.stage[-1].C
 
+    def decoupling(self):
+        """détache le dernier étage. Utilisé lors des calculs"""
+        self.M -= self.stage[-1].M_empty
+        self.stage.pop()
+        self.update()
+
+    def stage_time(self):
+        """Calcul la durée dépuisement du fuel de l'étage actuel"""
+        t_stage = self.stage[-1].M_fuel/self.stage[-1].C
+        return t_stage
+
     def initial_velocity(self, position, environnement):
         """Converti la position données en coordonnées sphériques pour le transformer
            en vitesse initiale en coordonnées cartésiennes due à la rotation de la Terre"""
@@ -86,67 +108,9 @@ class Rocket:
 
         return np.array([v_x, v_y, 0])
 
-    def decoupling(self):
-        """détache le dernier étage"""
-        if len(self.stage) == 0:
-            print("Pour supprimer un étage il faudrait déja qu'il y en ai un.")
-        else :
-            self.M -= self.stage[-1].M_empty
-            self.stage.pop()
-            self.update()
-
-    def stage_time(self):
-        """Calcul la durée dépuisement du fuel de l'étage actuel"""
-        t_stage = self.stage[-1].M_fuel/self.stage[-1].C
-        return t_stage
-
     def launch(self, position, environnement):
         """Définis la séquence de lancement et calcule l'EM"""
         X = convert_init(position, environnement)
         V = initial_velocity(position, environnement)
         Z = [X,Y]
         self.update()
-
-#----------------------------------CONVERSIONS COORDONNEES---------------------------------#
-
-    def convert_init(self, position, environnement):
-        """Converti les coordonnées sphériques en coordonnées cartésiennes à l'initialisation"""
-        x = environnement.r_earth*math.cos(position[0])*math.cos(position[1])
-        y = environnement.r_earth*math.cos(position[0])*math.sin(position[1])
-        z = environnement.r_earth*math.sin(position[0])
-
-        return np.array([x,y,z])
-
-    def convert_SC(self, position):
-        """Converti les coordonnées sphériques en coordonnées cartésiennes.
-           Les coordonnées sont données sous la forme suivante [r, theta, phi]"""
-        x = position[0]*math.cos(position[1])*math.cos(position[2])
-        y = position[0]*math.cos(position[1])*math.sin(position[2])
-        z = position[0]*math.sin(position[1])
-
-        return np.array([x,y,z])
-
-    def convert_CS(self, position):
-        """Converti les coordonnées cartésiennes en coordonnées sphériques"""
-        r = math.sqrt(sum([x_i**2 for x_i in position]))
-        if position[0] == 0:
-            if position[1] > 0 :
-                phi = math.pi/2
-            if position[1] < 0 :
-                phi = 3*(math.pi/2)
-        else:
-            phi = math.atan(position[1]/position[0])
-        if position[0]**2 + position[1]**2 == 0:
-            theta = math.pi/2 * math.copysign(1, position[2])
-        else:
-            theta = math.atan(position[2]/math.sqrt(position[0]**2 + position[1]**2))
-
-        return np.array([r,theta,phi])
-
-#----------------------------------EQUATION MOUVEMENT--------------------------------------#
-    def EM(self, X, Y, environnement):
-        """Définis l'Equation du mouvement de la fusée"""
-        a = (P - Ff - G)/M_var
-#---------------------------------------AFFICHAGE------------------------------------------#
-    def display(self):
-        pass
