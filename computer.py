@@ -113,6 +113,7 @@ class Computer:
 
     def launch(self, position):
         """Réalise les calculs grâce à RK45"""
+        print(txt_to_print+"\n/!\ DECOLAGE\n"+txt_to_print+"\n")
         #Conditions initiales
         X = self.convert_init(position)
         V = self.earth_rotation_velocity(position)
@@ -126,8 +127,8 @@ class Computer:
             T = self.rocket.stage_time()
             solution.append(ode.solve_ivp(self.radial_launch, (0,T), Y, vectorized = False, max_step = T/1000))
             self.rocket.M -= self.rocket.stage[-1].M_fuel
-            self.rocket.decoupling()
             print("Découplage du "+self.rocket.stage[-1].name +" après :"+str(T)+"s")
+            self.rocket.decoupling()
             Y[0] = solution[i].y[0][-1]
             Y[1] = solution[i].y[1][-1]
             Y[2] = solution[i].y[2][-1]
@@ -153,4 +154,4 @@ class Computer:
         plt.show()
 
 self = Computer()
-self.launch([0, 0])
+self.launch([0,0])
