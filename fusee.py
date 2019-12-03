@@ -86,6 +86,9 @@ class Rocket:
             self.P       = self.stage[-1].P
             self.C_A     = self.stage[-1].C_A
             self.C       = self.stage[-1].C
+    def update_txt(self):
+        self.update()
+        print("Données actuelles de la fusée :")
 
     def decoupling(self):
         """détache le dernier étage. Utilisé lors des calculs"""
