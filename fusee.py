@@ -4,7 +4,7 @@ import numpy as np
 
 from environnement import *
 
-#CLASSE DECRIVANT LES DONNEES D UN ETAGE
+#---------------------------CLASSE DECRIVANT LES DONNEES D'UN ETAGE------------------------#
 class Stage:
     def __init__(self, type, M_empty, M_fuel, P, C_A, C):
         self.type     = type
@@ -14,7 +14,7 @@ class Stage:
         self.C_A      = C_A
         self.C        = C
 
-#CLASSE DECRIVANT LA FUSEE UTILISEE
+#-----------------------------CLASSE DECRIVANT LA FUSEE UTILISEE---------------------------#
 class Rocket:
     def __init__(self):
         self.M        = 0
@@ -24,6 +24,7 @@ class Rocket:
         self.C_boost  = 0
         self.stage    =[]
 
+    #---------------------------FONCTIONS LIEES A LA FUSEE-----------------------------#
     def add_stage(self, stage_type, M_empty, M_fuel, P, C_A, C):
         """ajoute une étage à la fusée en partant de la charge utile (le haut)"""
 
@@ -86,11 +87,10 @@ class Rocket:
             self.C       = self.stage[-1].C
             self.C_boost = 0
 
-    def launch(self, position, environment):
-        X = convert_init(position, environment)
-        V = initial_velocity(position, environment)
-        Y = [X,Y]
-        self.update()
+    def stage_time(self):
+        """Calcul la durée dépuisement du fuel de l'étage actuel"""
+        t_stage = self.stage[-1].M_fuel/self.stage[-1].C
+        return t_stage
 
     def decoupling(self):
         """détache le dernier étage"""
@@ -98,10 +98,16 @@ class Rocket:
         self.stage.pop()
         self.update()
 
-    def stage_time(self):
-        """Calcul la durée dépuisement du fuel de l'étage actuel"""
-        t_stage = self.stage[-1].M_fuel/self.stage[-1].C
-        return t_stage
+    def decouple(self):
+        """détache le dernier étage""" #variante de decoupling
+        self.M -= self.stage[-1].M_empty + self.stage[-1].M_fuel
+        if self.stage[-1].type == 'booster':
+            T = self.stage_time()
+            self.stage[-2].M_fuel -= self.stage[-2].C * T
+            self.M -= self.stage[-2].C * T
+        self.stage.pop()
+        self.update()
+
 
     def display(self):
         pass

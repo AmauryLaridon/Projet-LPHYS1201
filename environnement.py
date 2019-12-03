@@ -1,4 +1,4 @@
-#CLASSE MODELISANT TOUT L ENVIRONNEMENT DE VOL
+#--------------------CLASSE MODELISANT TOUT L'ENVIRONNEMENT DE VOL----------------#
 class Environment :
     def __init__(self, G = 6.6743e-11, M_earth = 5.972e24, r_earth = 6371000, gk = 0.03417429, L_B = 0.0065, T_0 = 288.15, rho_0 = 1.225, T_rot = 86164):
         self.G       = G
