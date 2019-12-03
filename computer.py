@@ -102,6 +102,41 @@ class Computer:
             solution = ode.RK45(self.radial_launch, 0, Y, T, vectorized = True)
             print(solution)
 
+        """
+
+    def fct_RK_4(self, fonction, t, x, dt):
+        k_1 = fonction(t, x)
+        k_2 = fonction(t + dt/2, x + dt/2 * k_1)
+        k_3 = fonction(t + dt/2, x + dt/2 * k_2)
+        k_4 = fonction(t + dt, x + dt * k_3)
+
+        return (k_1 + 2 * k_2 + 2 * k_3 + k_4)/6
+
+    def RK_4(self, fonction, t, x, t_end, dt, first = False):
+        if first:
+            self.t_solved.append(t)
+            self.x_solved.append(x)
+        while t < t_end:
+            x = x + dt * self.fct_RK_4(fonction, t, x, dt)
+            t += dt
+            self.t_solved.append(t)
+            self.x_solved.append(x)
+
+    def launch(self, position):
+        X = self.convert_init(position)
+        V = self.earth_rotation_velocity(position)
+        Y = X + V
+        Y = Y + [0]
+        
+        for i in range(len(self.rocket.stage)-1):
+            Y[6] = self.rocket.M
+            self.rocket.update()
+
+            T = self.rocket.stage_time()
+            self.RK_4(self.radial_launch, 0, Y, T, 1)
+            self.decouple()
+          """
+
 
 a = Computer()
 a.launch([0,0])

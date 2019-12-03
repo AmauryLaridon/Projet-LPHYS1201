@@ -84,6 +84,7 @@ class Rocket:
             self.P       = self.stage[-1].P
             self.C_A     = self.stage[-1].C_A
             self.C       = self.stage[-1].C
+            self.C_boost = 0
 
     def launch(self, position, environment):
         X = convert_init(position, environment)
