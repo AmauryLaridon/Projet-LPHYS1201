@@ -148,9 +148,9 @@ class Computer:
         x_earth = self.environment.r_earth*np.cos(u)*np.sin(v)
         y_earth = self.environment.r_earth*np.sin(u)*np.sin(v)
         z_earth = self.environment.r_earth*np.cos(v)
-        ax.plot_wireframe(x_earth, y_earth, z_earth, color='b')
+        #ax.plot_wireframe(x_earth, y_earth, z_earth, color='b')
         for sol in solution:
-            ax.scatter3D(sol.y[0], sol.y[1], sol.y[2])
+            ax.plot(sol.y[0], sol.y[1], sol.y[2])
         plt.show()
 
 self = Computer()

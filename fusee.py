@@ -1,6 +1,7 @@
 import math
 import scipy
 import numpy as np
+from copy import copy, deepcopy
 
 from environnement import *
 
@@ -22,12 +23,13 @@ class Stage:
 #-----------------------------CLASSE DECRIVANT LA FUSEE UTILISEE---------------------------#
 class Rocket:
     def __init__(self):
-        self.M        = 0
-        self.P        = 0
-        self.C_A      = 0
-        self.C        = 0
-        self.C_boost  = 0
-        self.stage    =[]
+        self.M               = 0
+        self.M_fuel_rocket   = 0
+        self.P               = 0
+        self.C_A             = 0
+        self.C               = 0
+        self.C_boost         = 0
+        self.stage           =[]
 #-------------------------------FONCTIONS LIEES A LA FUSEE---------------------------------#
     def add_stage(self, stage_type, stage_name, M_empty, M_fuel, P, C_A, C):
         """ajoute une étage à la fusée en partant de la charge utile (le haut)"""
@@ -50,8 +52,9 @@ class Rocket:
             #code de la fonction
             new_stage = Stage(stage_type, stage_name, M_empty, M_fuel, P, C_A, C)
             self.stage.append(new_stage)
-            self.M += new_stage.M_empty + new_stage.M_fuel
-            self.P += new_stage.P
+            self.M             += new_stage.M_empty + new_stage.M_fuel
+            self.M_fuel_rocket += new_stage.M_fuel
+            self.P             += new_stage.P
 
     def remove_stage(self):
         """supprime le dernier étage de la fusée. Fonction destinée à l'utilisateur
@@ -59,6 +62,7 @@ class Rocket:
         if len(self.stage) == 0:
             print("Pour supprimer un étage il faudrait déja qu'il y en ai un.")
         else:
+            self.M_fuel_rocket -= self.stage[-1].M_fuel
             self.M -= self.stage[-1].M_empty + self.stage[-1].M_fuel
             self.stage.pop()
         print("Vous venez de supprimer un étage")
@@ -70,7 +74,7 @@ class Rocket:
         self.add_stage('payload', 'Module Soyuz', 7000, 0, 0, 2.86, 0)
         self.add_stage('stage', 'Troisième étage', 2250, 25200, 300000, 2.78, 105)
         self.add_stage('stage', 'Deuxième étage', 6500, 105000, 1000000, 3.42, 350)
-        self.add_stage('booster', 'Booster', 4*3500, 4*40000, 4*1000000, 4*2.82, 4*333.33)
+        self.add_stage('booster', 'Boosters', 4*3500, 4*40000, 4*1000000, 4*2.82, 4*333.33)
         print("La fusée est maintenant une fusée Soyuz.")
         self.update_console()
 
@@ -104,20 +108,24 @@ class Rocket:
         return M_act""" #j'arrive pas à le coder
 
     """def fuel_remaining(self):
-        for i in range(len(self.stage)):
-            M_fuel_remaining = sum(self.stage[:].M_fuel)"""
+        M_fuel_stage =deepcopy(self.stage[:].M_fuel)
+        for i in range(len(M_fuel_stage)):
+            M_fuel_remaining = sum(M_fuel_stage)
+        return M_fuel_remaining"""
 
     def update_console(self):
         """Affiche l'état actuel de la fusée"""
         print("Etat actuel de la fusée:")
         print("Etages restants: \n")
         for i in range(len(self.stage)):
-            print(self.stage[i].name+txt_to_print2+"|Carburant restant:"+str(self.stage[i].M_fuel)+"kg|Poussée disponible: "+str(self.stage[i].P)+"N")
+            #print(self.stage[i].name+txt_to_print2+"|Carburant restant:"+str(self.stage[i].M_fuel)+"kg|Masse à vide: "+str(self.stage[i].M_empty)+"kg"+"|Poussée disponible: "+str(self.stage[i].P)+"N")
+            print("{nom}\t\t|Carburant restant: {fuel:>8}|Masse à vide: {masse:>8}|Poussée disponible: {pousee:>8}".format(nom = self.stage[i].name, fuel = str(self.stage[i].M_fuel)+"kg", masse = str(self.stage[i].M_empty)+"kg", pousee = str(self.stage[i].P)+"N"))
         print("\n")
         print("Paramètres généraux: \n")
         #print("Carburant restant{}\n".format(self.M_fuel_remaining))
-        print("Masse totale {}kg".format(self.M))
-        print("Poussée restante {}N\n".format(self.P))
+        print("Carburant restant: {}kg".format(self.M_fuel_rocket))
+        print("Masse totale: {}kg".format(self.M))
+        print("Poussée restante: {}N\n".format(self.P))
 
 
     def decoupling(self):
@@ -125,6 +133,7 @@ class Rocket:
         #if self.stage[-1].M_fuel == 0:
         print(txt_to_print+"\n/!\ SEPARATION\n"+txt_to_print)
         self.M -= self.stage[-1].M_empty
+        self.M_fuel_rocket -= self.stage[-1].M_fuel
         self.stage.pop()
         self.update()
     def stage_time(self):
