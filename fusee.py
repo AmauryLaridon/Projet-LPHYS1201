@@ -118,7 +118,6 @@ class Rocket:
         print("Etat actuel de la fusée:")
         print("Etages restants: \n")
         for i in range(len(self.stage)):
-            #print(self.stage[i].name+txt_to_print2+"|Carburant restant:"+str(self.stage[i].M_fuel)+"kg|Masse à vide: "+str(self.stage[i].M_empty)+"kg"+"|Poussée disponible: "+str(self.stage[i].P)+"N")
             print("{nom}\t\t|Carburant restant: {fuel:>8}|Masse à vide: {masse:>8}|Poussée disponible: {pousee:>8}".format(nom = self.stage[i].name, fuel = str(self.stage[i].M_fuel)+"kg", masse = str(self.stage[i].M_empty)+"kg", pousee = str(self.stage[i].P)+"N"))
         print("\n")
         print("Paramètres généraux: \n")

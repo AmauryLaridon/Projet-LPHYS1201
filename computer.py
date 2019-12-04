@@ -2,6 +2,7 @@ import math
 import scipy.integrate as ode
 import numpy as np
 import matplotlib.pyplot as plt
+import csv
 
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
@@ -135,12 +136,13 @@ class Computer:
             Y[3] = solution[i].y[3][-1]
             Y[4] = solution[i].y[4][-1]
             Y[5] = solution[i].y[5][-1]
+            data = Y
+            print(data)
         #Ecriture des donnée dans un fichier
-        """with open(flight_data.csv,'w') as file:
-            writer = csv.writer(file)
-            writer.writerow(["temps","position", "vitesse"])
-            for t, y, v in zip(self.time_stored, self.pos_stored, self.speed_stored):
-                writer.writerow([t,y,v])"""
+            with open("flight_data.csv",'a') as file:
+                writer = csv.writer(file)
+                writer.writerow(["Coordonnées cartésiennes x/y/z","Vitesse selon x/y/z", "Masse totale de la fusée"])
+                writer.writerow([data[0:3], data[3:6], data[6]])
         #Affichage
         fig = plt.figure()
         ax = fig.gca(projection='3d') # changement de coordonnées
@@ -151,7 +153,7 @@ class Computer:
         #ax.plot_wireframe(x_earth, y_earth, z_earth, color='b')
         for sol in solution:
             ax.plot(sol.y[0], sol.y[1], sol.y[2])
-        plt.show()
+        #plt.show()
 
 self = Computer()
 self.launch([0,0])
