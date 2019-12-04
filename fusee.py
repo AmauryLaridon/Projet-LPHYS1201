@@ -122,7 +122,6 @@ class Rocket:
             print("Poussée de l'étage courant:{}N\n".format(self.stage[-1].P+self.stage[-2].P))
         else :
             print("Poussée de l'étage courant:  {}N\n".format(self.stage[-1].P))
-        
 
     def stage_time(self):
         """Calcul la durée dépuisement du fuel de l'étage actuel"""
