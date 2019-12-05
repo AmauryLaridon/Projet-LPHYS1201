@@ -103,10 +103,9 @@ class Computer:
          #calcul de la vitesse radiale
         v_rad = self.radial_velocity([theta, phi], [v_x, v_y, v_z])
         v_pot = math.sqrt(2*self.environment.G*self.environment.M_earth*abs(1/(self.environment.r_earth+400000) - 1/r))
+        #Vitesse nécessaire pour avoir l'energie potentielle définie par la hauteur
         if v_rad >= v_pot:
             self.test = 1
-        #if r > self.environment.r_earth+400000-0.7 and r < self.environment.r_earth+400000+0.7:
-            #print("v_x =", v_x, "   v_y =", v_y, "   v_z =", v_z, "     v =", math.sqrt(v_x**2 + v_y**2 + v_z**2))
         #Défini le vent
         V = self.wind_velocity(S)
         #Défini les vitesses relatives dues au vent
@@ -124,11 +123,6 @@ class Computer:
         #Implémentation d'une partie de l'équation du mouvement ne prenant ici qu'en compte le poids de la fusée
         #et la pousée
         #calcul de l'accélération
-        """a1 = self.rocket.P/M - (self.environment.G * self.environment.M_earth)/(r**2)
-        a_x = a1*math.cos(theta)*math.cos(phi) - rho*v_rel*self.rocket.C_A*v_xrel/(2*M)
-        a_y = a1*math.cos(theta)*math.sin(phi) - rho*v_rel*self.rocket.C_A*v_yrel/(2*M)
-        a_z = a1*math.sin(theta) - rho*v_rel*self.rocket.C_A*v_zrel/(2*M)
-        """
         if self.test != 1:
             a1 = self.rocket.P/M - (self.environment.G * self.environment.M_earth)/(r**2)
         else:
@@ -148,25 +142,28 @@ class Computer:
         V = self.earth_rotation_velocity(angles)
         Y = X + V
         Y = Y + [0]
-        solution = []
+        T = 0
+        t_0 = 0
+        data_t = []
         #self.rocket.update()
         #Calcul
         for i in range(len(self.rocket.stage)-1):
             Y[6] = self.rocket.M
+            t_0 += T
             T = self.rocket.stage_time()
-            self.solution.append(ode.solve_ivp(self.radial_launch, (0,T), Y, vectorized = False, max_step = T/1000))
-            print("Découplage du "+self.rocket.stage[-1].name +" après :"+str(T)+"s")
+            self.solution.append(ode.solve_ivp(self.radial_launch, (t_0,T+t_0), Y, vectorized = False, max_step = T/1000))
+            print("Découplage du "+self.rocket.stage[-1].name +" après :"+str(T+t_0)+"s")
             self.rocket.decouple()
             for j in range(6):
                 Y[j] = self.solution[i].y[j][-1]
-
-            data = Y
-            #print(data)
+            for t in self.solution[i].t:
+                data_t.append(t)
+            data_y = Y
         #Ecriture des donnée dans un fichier
-            with open("flight_data.csv",'a') as file:
+            with open("flight_data.csv",'w') as file:
                 writer = csv.writer(file)
                 writer.writerow(["Coordonnées cartésiennes x/y/z","Vitesse selon x/y/z", "Masse totale de la fusée"])
-                writer.writerow([data[0:3], data[3:6], data[6]])
+                writer.writerow([self.solution[0].t, data_y[0:3], data_y[3:6], data_y[6]])
         #Affichage
         self.display()
     def display(self):
@@ -189,20 +186,17 @@ class Computer:
         for sol in self.solution:
             plt.plot(sol.t, sol.y[3])
         plt.show()
-        delta_t = 0
         for sol in self.solution:
-            plt.plot(sol.t + delta_t, np.sqrt(sol.y[0]**2 + sol.y[1]**2+sol.y[2]**2)-self.environment.r_earth)
-            delta_t += sol.t[-1]
+            plt.plot(sol.t, np.sqrt(sol.y[0]**2 + sol.y[1]**2+sol.y[2]**2)-self.environment.r_earth)
         plt.title('h')
         plt.show()
-        delta_t = 0 #c'est juste pour vérifier la masse
+         #c'est juste pour vérifier la masse
         for sol in self.solution:
-            plt.plot(sol.t + delta_t, sol.y[6])
-            delta_t += sol.t[-1]
+            plt.plot(sol.t, sol.y[6])
         plt.show()
 
 
 if __name__ == "__main__":
 
     self = Computer()
-    self.launch([0,0])
+    self.launch([5,-52])

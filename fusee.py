@@ -96,6 +96,8 @@ class Rocket:
 
     def update(self):
         """Permet de mettre à jours les valeurs courantes de la fusée"""
+        self.M_fuel_rocket = 0
+        self.P_tot         = 0
         for i in range(len(self.stage)):
             self.M_fuel_rocket += self.stage[i].M_fuel
             self.P_tot         += self.stage[i].P
@@ -110,6 +112,7 @@ class Rocket:
             self.P       = self.stage[-1].P
             self.C_A     = self.stage[-1].C_A
             self.C       = self.stage[-1].C
+            self.C_boost = 0
         #Mise à jour console
         self.update_console()
 
@@ -146,10 +149,10 @@ class Rocket:
     def decouple(self):
         """détache le dernier étage""" #variante de decoupling
         print(txt_to_print+"\n/!\ SEPARATION\n"+txt_to_print)
-        self.M = self.M - (self.stage[-1].M_empty + self.stage[-1].M_fuel)
+        self.M -= self.stage[-1].M_empty + self.stage[-1].M_fuel
         if self.stage[-1].type == 'booster':
             T = self.stage_time()
-            self.stage[-2].M_fuel -= self.stage[-2].C * T                   #Juste dans le carburant ???
+            self.stage[-2].M_fuel -= self.stage[-2].C * T
             self.M -= self.stage[-2].C * T
         self.stage.pop()
         self.update()
