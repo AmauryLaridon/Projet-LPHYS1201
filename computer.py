@@ -168,7 +168,7 @@ class Computer:
                 writer.writerow(["Coordonnées cartésiennes x/y/z","Vitesse selon x/y/z", "Masse totale de la fusée"])
                 writer.writerow([data[0:3], data[3:6], data[6]])
         #Affichage
-        #self.display()
+        self.display()
     def display(self):
         fig = plt.figure()
         ax = fig.gca(projection='3d')
@@ -176,19 +176,17 @@ class Computer:
         x_earth = self.environment.r_earth*np.cos(u)*np.sin(v)
         y_earth = self.environment.r_earth*np.sin(u)*np.sin(v)
         z_earth = self.environment.r_earth*np.cos(v)
-        #ax.plot_surface(x_earth, y_earth, z_earth, rstride=1, cstride=1, cmap='magma', edgecolor='none')
+        ax.plot_surface(x_earth, y_earth, z_earth, rstride=1, cstride=1, cmap='magma', edgecolor='none')
         #ax.plot_wireframe(x_earth, y_earth, z_earth, color='r')
-        ax.plot_wireframe(x_earth, y_earth, z_earth, color='b')
+        #ax.plot_wireframe(x_earth, y_earth, z_earth, color='b')
 
         for sol in self.solution:
             ax.plot(sol.y[0], sol.y[1], sol.y[2])
-
         plt.show()
 
         #DEBUG ZONE -------------------------------------------------------------------------------------------------------------------------
 
-
-        """for sol in self.solution:
+        for sol in self.solution:
             plt.plot(sol.t, sol.y[3])
         plt.show()
         delta_t = 0
@@ -201,10 +199,10 @@ class Computer:
         for sol in self.solution:
             plt.plot(sol.t + delta_t, sol.y[6])
             delta_t += sol.t[-1]
-        plt.show()"""
+        plt.show()
 
 
 if __name__ == "__main__":
 
     self = Computer()
-    self.launch([45,0])
+    self.launch([0,0])
