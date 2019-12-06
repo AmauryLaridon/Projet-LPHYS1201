@@ -145,7 +145,7 @@ class Computer:
         T = 0
         t_0 = 0
         data_t = []
-        #self.rocket.update()
+        data_y = []
         #Calcul
         for i in range(len(self.rocket.stage)-1):
             Y[6] = self.rocket.M
@@ -156,14 +156,18 @@ class Computer:
             self.rocket.decouple()
             for j in range(6):
                 Y[j] = self.solution[i].y[j][-1]
+                data_y.append(Y)
             for t in self.solution[i].t:
                 data_t.append(t)
-            data_y = Y
+
+        print(data_y)
+        #print(data_t)
+
         #Ecriture des donnée dans un fichier
-            with open("flight_data.csv",'w') as file:
-                writer = csv.writer(file)
-                writer.writerow(["Coordonnées cartésiennes x/y/z","Vitesse selon x/y/z", "Masse totale de la fusée"])
-                writer.writerow([self.solution[0].t, data_y[0:3], data_y[3:6], data_y[6]])
+        with open("flight_data.csv",'w') as file:
+            writer = csv.writer(file)
+            writer.writerow(["Coordonnées cartésiennes x/y/z","Vitesse selon x/y/z", "Masse totale de la fusée"])
+            writer.writerow([data_y[0:3], data_y[3:6], data_y[6]])
         #Affichage
         self.display()
     def display(self):
