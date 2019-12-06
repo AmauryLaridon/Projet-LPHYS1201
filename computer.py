@@ -234,9 +234,9 @@ class Computer:
         plt.title('h')
         plt.show()
          #c'est juste pour vérifier la masse
-        #for sol in self.solution:
-        #    plt.plot(sol.t, sol.y[6])
-        #plt.show()
+        for sol in self.solution:
+            plt.plot(sol.t, sol.y[6])
+        plt.show()
 
 
 if __name__ == "__main__":
