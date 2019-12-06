@@ -17,7 +17,7 @@ class Computer:
         self.rocket.create_soyuz()
         self.environment = Environment()
         self.solution    = []
-        self.test        = 0
+        self.t_inter     = 0
 
     def coord_to_rad(self, position):
         """Converti les coordonnées angulaires données en degré en radian"""
@@ -105,7 +105,7 @@ class Computer:
         v_pot = math.sqrt(2*self.environment.G*self.environment.M_earth*abs(1/(self.environment.r_earth+400000) - 1/r))
         #Vitesse nécessaire pour avoir l'energie potentielle définie par la hauteur
         if v_rad >= v_pot:
-            self.test = 1
+            self.t_inter = t
         #Défini le vent
         V = self.wind_velocity(S)
         #Défini les vitesses relatives dues au vent
@@ -123,15 +123,42 @@ class Computer:
         #Implémentation d'une partie de l'équation du mouvement ne prenant ici qu'en compte le poids de la fusée
         #et la pousée
         #calcul de l'accélération
-        if self.test != 1:
-            a1 = self.rocket.P/M - (self.environment.G * self.environment.M_earth)/(r**2)
+        if self.t_inter == 0:
+            a_rad = self.rocket.P/M - (self.environment.G * self.environment.M_earth)/(r**2)
+            a_eng = 0
+            eng_dir = [0,0,0]
         else:
-            a1 = - (self.environment.G * self.environment.M_earth)/(r**2)
-        a_x = a1*math.cos(theta)*math.cos(phi) - rho*v_rel*self.rocket.C_A*v_xrel/(2*M)
-        a_y = a1*math.cos(theta)*math.sin(phi) - rho*v_rel*self.rocket.C_A*v_yrel/(2*M)
-        a_z = a1*math.sin(theta) - rho*v_rel*self.rocket.C_A*v_zrel/(2*M)
+            a_rad = - (self.environment.G * self.environment.M_earth)/(r**2)
+            a_eng = self.rocket.P/M
+            eng_dir = self.normal_acceleration(self.orb_dir, [x, y, z])
+
+        a_x = a_rad*math.cos(theta)*math.cos(phi) - rho*v_rel*self.rocket.C_A*v_xrel/(2*M) + a_eng*eng_dir[0]
+        a_y = a_rad*math.cos(theta)*math.sin(phi) - rho*v_rel*self.rocket.C_A*v_yrel/(2*M) + a_eng*eng_dir[1]
+        a_z = a_rad*math.sin(theta) - rho*v_rel*self.rocket.C_A*v_zrel/(2*M) + a_eng*eng_dir[2]
 
         return np.array([v_x, v_y, v_z, a_x, a_y, a_z, dM])
+
+    def produit_vectoriel(self, v, w):
+        """Défini le produit vectoriel entre deux vecteurs"""
+        u = [v[(i+1)%3]*w[(i+2)%3]-v[(i+2)%3]*w[(i+1)%3] for i in range(3)]
+        return u
+
+    def norme(self, v):
+        norme = math.sqrt(sum([v[i]**2 for i in range(len(v))]))
+        return norme
+
+    def orbiting_direction(self, X, V):
+        """Défini le vecteur normal au plan de l'orbite"""
+        X_norm = [X[i]/self.norme(X) for i in range(3)]
+        V_norm = [V[i]/self.norme(V) for i in range(3)]
+        orbiting_direction = self.produit_vectoriel(X_norm, V_norm)
+        return orbiting_direction
+
+    def normal_acceleration(self, orbiting_direction, position):
+        """Fonction à implémenter dans RK45 pour avoir une circularisation de l'orbite après la première phase du vol"""
+        position_norm = [position[i]/self.norme(position) for i in range(3)]
+        thrust_direction = self.produit_vectoriel(orbiting_direction, position_norm)
+        return thrust_direction
 
     def launch(self, position):
         """Réalise les calculs grâce à RK45 et le lancement de la fusée"""
@@ -145,12 +172,10 @@ class Computer:
         T = 0
         t_0 = 0
         data_t = []
-<<<<<<< HEAD
         data_y = []
-=======
-        #self.rocket.update()
->>>>>>> 07ef1a5a691c45cf690d50d340993e0417328bb6
-        #Calcul
+        self.orb_dir = self.orbiting_direction(X, V)
+
+        #Calcul radial launch
         for i in range(len(self.rocket.stage)-1):
             Y[6] = self.rocket.M
             t_0 += T
@@ -160,29 +185,28 @@ class Computer:
             self.rocket.decouple()
             for j in range(6):
                 Y[j] = self.solution[i].y[j][-1]
-<<<<<<< HEAD
                 data_y.append(Y)
             for t in self.solution[i].t:
                 data_t.append(t)
+        Y[6] = self.rocket.M
+        t_0 += T
+        T = 10000
+        self.solution.append(ode.solve_ivp(self.radial_launch, (t_0,T+t_0), Y, vectorized = False, max_step = T/1000))
+        for j in range(6):
+            Y[j] = self.solution[-1].y[j][-1]
+            data_y.append(Y)
+        for t in self.solution[-1].t:
+            data_t.append(t)
+        #Calcul gravity turn
 
-        print(data_y)
+        #print(data_y)
         #print(data_t)
 
         #Ecriture des donnée dans un fichier
-        with open("flight_data.csv",'w') as file:
-            writer = csv.writer(file)
-            writer.writerow(["Coordonnées cartésiennes x/y/z","Vitesse selon x/y/z", "Masse totale de la fusée"])
-            writer.writerow([data_y[0:3], data_y[3:6], data_y[6]])
-=======
-            for t in self.solution[i].t:
-                data_t.append(t)
-            data_y = Y
-        #Ecriture des donnée dans un fichier
-            with open("flight_data.csv",'w') as file:
+        """    with open("flight_data.csv",'w') as file:
                 writer = csv.writer(file)
                 writer.writerow(["Coordonnées cartésiennes x/y/z","Vitesse selon x/y/z", "Masse totale de la fusée"])
-                writer.writerow([self.solution[0].t, data_y[0:3], data_y[3:6], data_y[6]])
->>>>>>> 07ef1a5a691c45cf690d50d340993e0417328bb6
+                writer.writerow([self.solution[0].t, data_y[0:3], data_y[3:6], data_y[6]])"""
         #Affichage
         self.display()
     def display(self):
@@ -202,20 +226,20 @@ class Computer:
 
         #DEBUG ZONE -------------------------------------------------------------------------------------------------------------------------
 
-        for sol in self.solution:
-            plt.plot(sol.t, sol.y[3])
-        plt.show()
+        #for sol in self.solution:
+        #    plt.plot(sol.t, sol.y[3])
+        #plt.show()
         for sol in self.solution:
             plt.plot(sol.t, np.sqrt(sol.y[0]**2 + sol.y[1]**2+sol.y[2]**2)-self.environment.r_earth)
         plt.title('h')
         plt.show()
          #c'est juste pour vérifier la masse
-        for sol in self.solution:
-            plt.plot(sol.t, sol.y[6])
-        plt.show()
+        #for sol in self.solution:
+        #    plt.plot(sol.t, sol.y[6])
+        #plt.show()
 
 
 if __name__ == "__main__":
 
     self = Computer()
-    self.launch([5,-52])
+    self.launch([0,0])
