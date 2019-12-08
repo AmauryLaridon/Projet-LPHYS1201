@@ -72,7 +72,7 @@ class Rocket:
             self.stage.pop()
         print("Vous venez de supprimer un étage")
 
-    def create_soyuz(self):
+    def create_soyuz_mod(self):
         """Permet de créer directement une fusée de type Soyuz"""
         self.reset()
         self.add_stage('payload', 'Module Soyuz', 7000, 0, 0, 2.86, 0)
@@ -163,6 +163,3 @@ class Rocket:
             self.M -= self.stage[-2].C * T
         self.stage.pop()
         self.update()
-
-    def display(self):
-        pass

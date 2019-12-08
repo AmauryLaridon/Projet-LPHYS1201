@@ -14,7 +14,7 @@ from environnement import *
 class Computer:
     def __init__(self):
         self.rocket      = Rocket()
-        self.rocket.create_soyuz()
+        self.rocket.create_soyuz_mod()
         self.environment = Environment()
         self.solution    = []
         self.t_inter     = 0
@@ -188,6 +188,7 @@ class Computer:
                 data_y.append(Y)
             for t in self.solution[i].t:
                 data_t.append(t)
+        #Calcul circularisation
         Y[6] = self.rocket.M
         t_0 += T
         T = 10000
@@ -197,7 +198,6 @@ class Computer:
             data_y.append(Y)
         for t in self.solution[-1].t:
             data_t.append(t)
-        #Calcul gravity turn
 
         #print(data_y)
         #print(data_t)
@@ -211,32 +211,44 @@ class Computer:
         self.display()
     def display(self):
         fig = plt.figure()
+        #affichage de la planète
         ax = fig.gca(projection='3d')
         u, v = np.mgrid[0:2*np.pi:40j, 0:np.pi:20j]
         x_earth = self.environment.r_earth*np.cos(u)*np.sin(v)
         y_earth = self.environment.r_earth*np.sin(u)*np.sin(v)
         z_earth = self.environment.r_earth*np.cos(v)
         ax.plot_surface(x_earth, y_earth, z_earth, rstride=1, cstride=1, cmap='magma', edgecolor='none')
-        #ax.plot_wireframe(x_earth, y_earth, z_earth, color='r')
-        #ax.plot_wireframe(x_earth, y_earth, z_earth, color='b')
-
+        #affichage de la trajectoire
         for sol in self.solution:
             ax.plot(sol.y[0], sol.y[1], sol.y[2])
+        plt.title("Affichage de la trajectoire de la fusée avec la Terre modélisée au centre")
+        plt.xlabel("Axe des x (km)")
+        plt.ylabel("Axe des x (km)")
+
         plt.show()
+        #affichage de la hauteur de l'orbite en fonction du temps
+        for sol in self.solution:
+            plt.plot(sol.t, np.sqrt(sol.y[0]**2 + sol.y[1]**2+sol.y[2]**2)-self.environment.r_earth)
+        plt.title("Hauteur de l'orbite en fonction du temps")
+        plt.xlabel("Temps de vol (s)")
+        plt.ylabel("Hauteur de l'orbite (km)")
+        plt.show()
+         #c'est juste pour vérifier la masse
+        for sol in self.solution:
+            plt.plot(sol.t, sol.y[6])
+        plt.title("Evolution de la masse de la fusée durant le vol")
+        plt.xlabel("Temps de vol (s)")
+        plt.ylabel("Masse de la fusée (kg)")
+
+        plt.show()
+
 
         #DEBUG ZONE -------------------------------------------------------------------------------------------------------------------------
 
         #for sol in self.solution:
         #    plt.plot(sol.t, sol.y[3])
         #plt.show()
-        for sol in self.solution:
-            plt.plot(sol.t, np.sqrt(sol.y[0]**2 + sol.y[1]**2+sol.y[2]**2)-self.environment.r_earth)
-        plt.title('h')
-        plt.show()
-         #c'est juste pour vérifier la masse
-        for sol in self.solution:
-            plt.plot(sol.t, sol.y[6])
-        plt.show()
+
 
 
 if __name__ == "__main__":
