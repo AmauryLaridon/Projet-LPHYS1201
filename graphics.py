@@ -29,7 +29,7 @@ class Graphics:
             self.y.append(self.data_y[1][self.i])
             self.z.append(self.data_y[2][self.i])
             self.i += 1
-                
+
         self.t_anim += 10
 
         self.ax.clear()
@@ -39,7 +39,7 @@ class Graphics:
         y_earth = self.environment.r_earth*np.sin(u + self.environment.freq_rot*2*math.pi*self.t_anim)*np.sin(v)
         z_earth = self.environment.r_earth*np.cos(v)
         #self.ax.plot_surface(x_earth, y_earth, z_earth, rstride=1, cstride=1, cmap='magma', alpha = 0.5)
-        self.ax.plot_wireframe(x_earth, y_earth, z_earth, color='b', alpha = 0.5)
+        self.ax.plot_surface(x_earth, y_earth, z_earth, color='b', alpha = 0.5)
 
         self.ax.set_xlim(-self.r_max*1.1, self.r_max*1.1)
         self.ax.set_ylim(-self.r_max*1.1, self.r_max*1.1)
