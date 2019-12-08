@@ -2,6 +2,7 @@ import math
 import scipy.integrate as ode
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.animation as anim
 import csv
 
 from mpl_toolkits.mplot3d import Axes3D
@@ -9,15 +10,16 @@ from matplotlib import cm
 
 from fusee import *
 from environnement import *
+from graphics import *
 
 #-----------------------------CLASSE QUI PERMET D EFFECTUER TOUS LES CALCULS ET DE LES AFFICHER--------------------------#
 class Computer:
     def __init__(self):
-        self.rocket      = Rocket()
-        self.rocket.create_soyuz_mod()
-        self.environment = Environment()
-        self.solution    = []
-        self.t_inter     = 0
+        self.rocket        = Rocket()
+        self.rocket.create_soyuz()
+        self.environment   = Environment()
+        self.solution      = []
+        self.v_rad_reached = 0
 
     def coord_to_rad(self, position):
         """Converti les coordonnées angulaires données en degré en radian"""
@@ -58,11 +60,10 @@ class Computer:
 
         return [r,theta,phi]
 
-    def radial_velocity(self, theta_phi, v):
+    def radial_velocity(self, r_hat, v):
         """input la vitesse en coordonnées cartésienne [v_x, v_y, v_z] et les angles theta/phi [theta, phi] et return la vitesse radial v_rad"""
         V   = np.array(v)
-        rad = np.array([math.cos(theta_phi[0])*math.cos(theta_phi[1]), math.cos(theta_phi[0])*math.sin(theta_phi[1]), math.sin(theta_phi[0])])
-        v_rad = np.dot(V, rad)
+        v_rad = np.dot(V, r_hat)
 
         return v_rad
 
@@ -83,81 +84,68 @@ class Computer:
         v_x   = -omega*math.sin(position[2])
         v_y   =  omega*math.cos(position[2])
 
-        return [v_x, v_y, 0]
+        return np.array([v_x, v_y, 0])
 
     def radial_launch(self, t, X):
         """fonction a implementer dans RK-45 pour un lancement purement radiale"""
         #Variables de positions et de vitesse.
-        x   = X[0]
-        y   = X[1]
-        z   = X[2]
-        v_x = X[3]
-        v_y = X[4]
-        v_z = X[5]
-        M   = X[6]
+        x, y, z, v_x, v_y, v_z, M = X
+
         #coordonnées sphériques
-        S     = self.convert_CS([x,y,z])
-        r     = S[0]
-        theta = S[1]
-        phi   = S[2]
-         #calcul de la vitesse radiale
-        v_rad = self.radial_velocity([theta, phi], [v_x, v_y, v_z])
+        r, theta, phi = self.convert_CS([x,y,z])
+
+        #vecteur position normé
+        r_hat = np.array([x, y, z])/r
+        V = np.array([v_x, v_y, v_z])
+
+        #calcul de la vitesse radiale
+        v_rad = self.radial_velocity(r_hat, V)
         v_pot = math.sqrt(2*self.environment.G*self.environment.M_earth*abs(1/(self.environment.r_earth+400000) - 1/r))
-        #Vitesse nécessaire pour avoir l'energie potentielle définie par la hauteur
+        #Vitesse nécessaire pour avoir l'energie potentielle définie par la hauteur de l'orbite voulue
         if v_rad >= v_pot:
-            self.t_inter = t
+            self.v_rad_reached = True
         #Défini le vent
-        V = self.wind_velocity(S)
+        V_wind = self.wind_velocity([r, theta, phi])
         #Défini les vitesses relatives dues au vent
-        v_xrel = v_x - V[0]
-        v_yrel = v_y - V[1]
-        v_zrel = v_z - V[2]
-        v_rel = math.sqrt(v_xrel**2 + v_yrel**2 + v_zrel**2)
+        V_rel = V - V_wind
+        v_rel = np.linalg.norm(V_rel)
+
         #Défini la densité de l'air
         if r < self.environment.r_earth + 45000:
             rho = self.environment.air_density(r)
         else:
             rho = 0
+
         #Variation de masse
         dM = -self.rocket.C - self.rocket.C_boost
-        #Implémentation d'une partie de l'équation du mouvement ne prenant ici qu'en compte le poids de la fusée
-        #et la pousée
-        #calcul de l'accélération
-        if self.t_inter == 0:
-            a_rad = self.rocket.P/M - (self.environment.G * self.environment.M_earth)/(r**2)
-            a_eng = 0
-            eng_dir = [0,0,0]
-        else:
-            a_rad = - (self.environment.G * self.environment.M_earth)/(r**2)
-            a_eng = self.rocket.P/M
-            eng_dir = self.normal_acceleration(self.orb_dir, [x, y, z])
 
-        a_x = a_rad*math.cos(theta)*math.cos(phi) - rho*v_rel*self.rocket.C_A*v_xrel/(2*M) + a_eng*eng_dir[0]
-        a_y = a_rad*math.cos(theta)*math.sin(phi) - rho*v_rel*self.rocket.C_A*v_yrel/(2*M) + a_eng*eng_dir[1]
-        a_z = a_rad*math.sin(theta) - rho*v_rel*self.rocket.C_A*v_zrel/(2*M) + a_eng*eng_dir[2]
+        #calcul de l'accélération
+        a_grav = - (self.environment.G * self.environment.M_earth)/(r**2)
+        a_eng  = self.rocket.P/M
+        if r < self.environment.r_earth + 5000:
+            eng_dir = r_hat
+        elif r < self.environment.r_earth + 5500:
+            eng_dir = math.cos(0.2)*r_hat + math.sin(0.2)*self.normal_acceleration(self.orb_dir, r_hat)
+            eng_dir = eng_dir/np.linalg.norm(eng_dir)
+        elif not self.v_rad_reached:
+            eng_dir = math.sin(theta)*V/np.linalg.norm(V) + math.cos(theta)*r_hat
+            eng_dir = eng_dir/np.linalg.norm(eng_dir)
+        else:
+            eng_dir = self.normal_acceleration(self.orb_dir, r_hat)
+
+        a_x, a_y, a_z = a_grav*r_hat - rho*v_rel*self.rocket.C_A*V_rel/(2*M) + a_eng*eng_dir
 
         return np.array([v_x, v_y, v_z, a_x, a_y, a_z, dM])
 
-    def produit_vectoriel(self, v, w):
-        """Défini le produit vectoriel entre deux vecteurs"""
-        u = [v[(i+1)%3]*w[(i+2)%3]-v[(i+2)%3]*w[(i+1)%3] for i in range(3)]
-        return u
-
-    def norme(self, v):
-        norme = math.sqrt(sum([v[i]**2 for i in range(len(v))]))
-        return norme
-
-    def orbiting_direction(self, X, V):
+    def orbital_direction(self, X, V):
         """Défini le vecteur normal au plan de l'orbite"""
-        X_norm = [X[i]/self.norme(X) for i in range(3)]
-        V_norm = [V[i]/self.norme(V) for i in range(3)]
-        orbiting_direction = self.produit_vectoriel(X_norm, V_norm)
-        return orbiting_direction
+        XxV = np.cross(X, V)
+        orbital_direction = XxV/np.linalg.norm(XxV)
+        return orbital_direction
 
-    def normal_acceleration(self, orbiting_direction, position):
+    def normal_acceleration(self, orbital_direction, r_hat):
         """Fonction à implémenter dans RK45 pour avoir une circularisation de l'orbite après la première phase du vol"""
-        position_norm = [position[i]/self.norme(position) for i in range(3)]
-        thrust_direction = self.produit_vectoriel(orbiting_direction, position_norm)
+        thrust_direction = np.cross(orbital_direction, r_hat)
         return thrust_direction
 
     def launch(self, position):
@@ -171,87 +159,88 @@ class Computer:
         Y = Y + [0]
         T = 0
         t_0 = 0
-        data_t = []
-        data_y = []
-        self.orb_dir = self.orbiting_direction(X, V)
+        self.data_t = []
+        self.data_y = [[],[],[],[],[],[],[]]
+        self.orb_dir = self.orbital_direction(X, V)
 
         #Calcul radial launch
         for i in range(len(self.rocket.stage)-1):
             Y[6] = self.rocket.M
             t_0 += T
             T = self.rocket.stage_time()
-            self.solution.append(ode.solve_ivp(self.radial_launch, (t_0,T+t_0), Y, vectorized = False, max_step = T/1000))
+            self.solution.append(ode.solve_ivp(self.radial_launch, (t_0,T+t_0), Y, vectorized = False, max_step = T/500))
             print("Découplage du "+self.rocket.stage[-1].name +" après :"+str(T+t_0)+"s")
             self.rocket.decouple()
-            for j in range(6):
+            for j in range(7):
                 Y[j] = self.solution[i].y[j][-1]
-                data_y.append(Y)
-            for t in self.solution[i].t:
-                data_t.append(t)
-        #Calcul circularisation
+            for j in range(len(self.solution[i].t)):
+                self.data_t.append(self.solution[i].t[j])
+                for k in range(7):
+                    self.data_y[k].append(self.solution[i].y[k][j])
         Y[6] = self.rocket.M
         t_0 += T
+        #T = 6000
         T = 10000
         self.solution.append(ode.solve_ivp(self.radial_launch, (t_0,T+t_0), Y, vectorized = False, max_step = T/1000))
-        for j in range(6):
+        for j in range(7):
             Y[j] = self.solution[-1].y[j][-1]
-            data_y.append(Y)
-        for t in self.solution[-1].t:
-            data_t.append(t)
-
-        #print(data_y)
-        #print(data_t)
+        for j in range(len(self.solution[-1].t)):
+                self.data_t.append(self.solution[-1].t[j])
+                for k in range(7):
+                    self.data_y[k].append(self.solution[-1].y[k][j])
+                    pass
+        #Calcul gravity turn
 
         #Ecriture des donnée dans un fichier
         """    with open("flight_data.csv",'w') as file:
                 writer = csv.writer(file)
                 writer.writerow(["Coordonnées cartésiennes x/y/z","Vitesse selon x/y/z", "Masse totale de la fusée"])
-                writer.writerow([self.solution[0].t, data_y[0:3], data_y[3:6], data_y[6]])"""
+                writer.writerow([self.solution[0].t, self.data_y[0:3], self.data_y[3:6], self.data_y[6]])"""
         #Affichage
+        GUI = Graphics(self)
+        GUI.display_animation(self.data_t, self.data_y)
         self.display()
+
+
     def display(self):
-        fig = plt.figure()
-        #affichage de la planète
+        fig = plt.figure(figsize=plt.figaspect(0.8)*2)      #pour que la sphère ressemble à une sphère (credit : https://stackoverflow.com/questions/8130823/set-matplotlib-3d-plot-aspect-ratio/12371373)
         ax = fig.gca(projection='3d')
-        u, v = np.mgrid[0:2*np.pi:40j, 0:np.pi:20j]
+        u, v = np.mgrid[0:2*np.pi:40j, 0:np.pi:20j]     #technique allègrement volée ici https://stackoverflow.com/questions/11140163/plotting-a-3d-cube-a-sphere-and-a-vector-in-matplotlib
         x_earth = self.environment.r_earth*np.cos(u)*np.sin(v)
         y_earth = self.environment.r_earth*np.sin(u)*np.sin(v)
         z_earth = self.environment.r_earth*np.cos(v)
-        ax.plot_surface(x_earth, y_earth, z_earth, rstride=1, cstride=1, cmap='magma', edgecolor='none')
-        #affichage de la trajectoire
+        ax.plot_surface(x_earth, y_earth, z_earth, rstride=1, cstride=1, cmap='magma', alpha = 0.5)
+        #ax.plot_wireframe(x_earth, y_earth, z_earth, color='r')
+        #ax.plot_wireframe(x_earth, y_earth, z_earth, color='b')
+        ax.quiver(0,0,0,1,0,0,length=self.environment.r_earth)
+        ax.quiver(0,0,0,0,1,0,length=self.environment.r_earth)
+        ax.quiver(0,0,0,0,0,1,length=self.environment.r_earth)
+
         for sol in self.solution:
             ax.plot(sol.y[0], sol.y[1], sol.y[2])
-        plt.title("Affichage de la trajectoire de la fusée avec la Terre modélisée au centre")
-        plt.xlabel("Axe des x (km)")
-        plt.ylabel("Axe des x (km)")
-
         plt.show()
-        #affichage de la hauteur de l'orbite en fonction du temps
-        for sol in self.solution:
-            plt.plot(sol.t, np.sqrt(sol.y[0]**2 + sol.y[1]**2+sol.y[2]**2)-self.environment.r_earth)
-        plt.title("Hauteur de l'orbite en fonction du temps")
-        plt.xlabel("Temps de vol (s)")
-        plt.ylabel("Hauteur de l'orbite (km)")
-        plt.show()
-         #c'est juste pour vérifier la masse
-        for sol in self.solution:
-            plt.plot(sol.t, sol.y[6])
-        plt.title("Evolution de la masse de la fusée durant le vol")
-        plt.xlabel("Temps de vol (s)")
-        plt.ylabel("Masse de la fusée (kg)")
-
-        plt.show()
-
 
         #DEBUG ZONE -------------------------------------------------------------------------------------------------------------------------
 
         #for sol in self.solution:
         #    plt.plot(sol.t, sol.y[3])
         #plt.show()
+        for sol in self.solution:
+            plt.plot(sol.t, np.sqrt(sol.y[0]**2 + sol.y[1]**2+sol.y[2]**2)-self.environment.r_earth)
+        plt.title('h')
+        plt.show()
+         #c'est juste pour vérifier la masse
+        #for sol in self.solution:
+        #    plt.plot(sol.t, sol.y[6])
+        #plt.show()
+
+
+
+
 
 
 
 if __name__ == "__main__":
 
     self = Computer()
-    self.launch([0,0])
+    self.launch([45,0])
