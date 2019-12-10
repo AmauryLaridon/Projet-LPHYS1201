@@ -16,7 +16,7 @@ from graphics import *
 class Computer:
     def __init__(self):
         self.rocket        = Rocket()
-        self.rocket.create_soyuz()
+        self.rocket.create_soyuz_mod()
         self.environment   = Environment()
         self.solution      = []
         self.v_rad_reached = 0
@@ -180,7 +180,7 @@ class Computer:
         Y[6] = self.rocket.M
         t_0 += T
         #T = 6000
-        T = 10000
+        T = 8500
         self.solution.append(ode.solve_ivp(self.radial_launch, (t_0,T+t_0), Y, vectorized = False, max_step = T/1000))
         for j in range(7):
             Y[j] = self.solution[-1].y[j][-1]
@@ -199,7 +199,8 @@ class Computer:
         #Affichage
         GUI = Graphics(self)
         GUI.display_animation(self.data_t, self.data_y)
-        self.display()
+        GUI.display_plane()
+        #self.display()
 
 
     def display(self):
@@ -243,4 +244,5 @@ class Computer:
 if __name__ == "__main__":
 
     self = Computer()
+    #self.environment = Environment(M_earth = 5.2915e22, r_earth = 600000)      #ksp, bah putain c vraiment plus facile que la vrai vie...
     self.launch([45,0])
