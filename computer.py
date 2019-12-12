@@ -86,6 +86,19 @@ class Computer:
 
         return np.array([v_x, v_y, 0])
 
+
+    def orbital_direction(self, X, V):
+        """Défini le vecteur normal au plan de l'orbite"""
+        XxV = np.cross(X, V)
+        orbital_direction = XxV/np.linalg.norm(XxV)
+        return orbital_direction
+
+    def normal_acceleration(self, orbital_direction, r_hat):
+        """Fonction à implémenter dans RK45 pour avoir une circularisation de l'orbite après la première phase du vol"""
+        thrust_direction = np.cross(orbital_direction, r_hat)
+        return thrust_direction
+
+
     def radial_launch(self, t, X):
         """fonction a implementer dans RK-45 pour un lancement purement radiale"""
         #Variables de positions et de vitesse.
@@ -111,7 +124,7 @@ class Computer:
         v_rel = np.linalg.norm(V_rel)
 
         #Défini la densité de l'air
-        if r < self.environment.r_earth + 45000:
+        if r < self.environment.r_earth + 44330:
             rho = self.environment.air_density(r)
         else:
             rho = 0
@@ -136,17 +149,6 @@ class Computer:
         a_x, a_y, a_z = a_grav*r_hat - rho*v_rel*self.rocket.C_A*V_rel/(2*M) + a_eng*eng_dir
 
         return np.array([v_x, v_y, v_z, a_x, a_y, a_z, dM])
-
-    def orbital_direction(self, X, V):
-        """Défini le vecteur normal au plan de l'orbite"""
-        XxV = np.cross(X, V)
-        orbital_direction = XxV/np.linalg.norm(XxV)
-        return orbital_direction
-
-    def normal_acceleration(self, orbital_direction, r_hat):
-        """Fonction à implémenter dans RK45 pour avoir une circularisation de l'orbite après la première phase du vol"""
-        thrust_direction = np.cross(orbital_direction, r_hat)
-        return thrust_direction
 
     def launch(self, position):
         """Réalise les calculs grâce à RK45 et le lancement de la fusée"""
@@ -189,10 +191,10 @@ class Computer:
                 for k in range(7):
                     self.data_y[k].append(self.solution[-1].y[k][j])
                     pass
-        #Calcul gravity turn
 
-        #Ecriture des donnée dans un fichier
-        """    with open("flight_data.csv",'w') as file:
+
+        """#Ecriture des donnée dans un fichier
+            with open("flight_data.csv",'w') as file:
                 writer = csv.writer(file)
                 writer.writerow(["Coordonnées cartésiennes x/y/z","Vitesse selon x/y/z", "Masse totale de la fusée"])
                 writer.writerow([self.solution[0].t, self.data_y[0:3], self.data_y[3:6], self.data_y[6]])"""
