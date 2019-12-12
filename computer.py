@@ -16,11 +16,7 @@ from graphics import *
 class Computer:
     def __init__(self):
         self.rocket        = Rocket()
-<<<<<<< HEAD
         self.rocket.create_soyuz_mod()
-=======
-        self.rocket.create_falconIX()
->>>>>>> abeb66741760c6beffac0c3cf6a78324f45a2847
         self.environment   = Environment()
         self.solution      = []
         self.v_rad_reached = 0
@@ -66,11 +62,7 @@ class Computer:
 
     def radial_velocity(self, r_hat, v):
         """input la vitesse en coordonnées cartésienne [v_x, v_y, v_z] et les angles theta/phi [theta, phi] et return la vitesse radial v_rad"""
-<<<<<<< HEAD
         V   = np.array(v)
-=======
-        V     = np.array(v)
->>>>>>> abeb66741760c6beffac0c3cf6a78324f45a2847
         v_rad = np.dot(V, r_hat)
 
         return v_rad
@@ -93,7 +85,6 @@ class Computer:
         v_y   =  omega*math.cos(position[2])
 
         return np.array([v_x, v_y, 0])
-<<<<<<< HEAD
 
     def radial_launch(self, t, X):
         """fonction a implementer dans RK-45 pour un lancement purement radiale"""
@@ -111,34 +102,6 @@ class Computer:
         v_rad = self.radial_velocity(r_hat, V)
         v_pot = math.sqrt(2*self.environment.G*self.environment.M_earth*abs(1/(self.environment.r_earth+400000) - 1/r))
         #Vitesse nécessaire pour avoir l'energie potentielle définie par la hauteur de l'orbite voulue
-=======
-
-    def orbital_direction(self, X, V):
-        """Défini le vecteur normal au plan de l'orbite"""
-        XxV = np.cross(X, V)
-        orbital_direction = XxV/np.linalg.norm(XxV)
-        return orbital_direction
-
-    def normal_acceleration(self, orbital_direction, r_hat):
-        """Fonction à implémenter dans RK45 pour avoir une circularisation de l'orbite après la première phase du vol"""
-        thrust_direction = np.cross(orbital_direction, r_hat)
-        return thrust_direction
-
-    def radial_launch(self, t, X):
-        """Fonction a implementer dans RK-45 pour un lancement purement radiale"""
-        #variables de positions et de vitesse.
-        x, y, z, v_x, v_y, v_z, M = X
-        #coordonnées sphériques
-        r, theta, phi = self.convert_CS([x,y,z])
-        #vecteur position normé
-        r_hat = np.array([x, y, z])/r
-        #vecteur vitesse
-        V     = np.array([v_x, v_y, v_z])
-        #calcul de la vitesse radiale
-        v_rad = self.radial_velocity(r_hat, V)
-        #vitesse nécessaire pour avoir l'energie potentielle définie par la hauteur de l'orbite voulue
-        v_pot = math.sqrt(2*self.environment.G*self.environment.M_earth*abs(1/(self.environment.r_earth+400000) - 1/r))
->>>>>>> abeb66741760c6beffac0c3cf6a78324f45a2847
         if v_rad >= v_pot:
             self.v_rad_reached = True
         #Défini le vent
@@ -146,22 +109,16 @@ class Computer:
         #Défini les vitesses relatives dues au vent
         V_rel = V - V_wind
         v_rel = np.linalg.norm(V_rel)
-<<<<<<< HEAD
 
-=======
->>>>>>> abeb66741760c6beffac0c3cf6a78324f45a2847
         #Défini la densité de l'air
-        if r < self.environment.r_earth + 44330:
+        if r < self.environment.r_earth + 45000:
             rho = self.environment.air_density(r)
         else:
             rho = 0
 
         #Variation de masse
         dM = -self.rocket.C - self.rocket.C_boost
-<<<<<<< HEAD
 
-=======
->>>>>>> abeb66741760c6beffac0c3cf6a78324f45a2847
         #calcul de l'accélération
         a_grav = - (self.environment.G * self.environment.M_earth)/(r**2)
         a_eng  = self.rocket.P/M
@@ -180,7 +137,6 @@ class Computer:
 
         return np.array([v_x, v_y, v_z, a_x, a_y, a_z, dM])
 
-<<<<<<< HEAD
     def orbital_direction(self, X, V):
         """Défini le vecteur normal au plan de l'orbite"""
         XxV = np.cross(X, V)
@@ -192,8 +148,6 @@ class Computer:
         thrust_direction = np.cross(orbital_direction, r_hat)
         return thrust_direction
 
-=======
->>>>>>> abeb66741760c6beffac0c3cf6a78324f45a2847
     def launch(self, position):
         """Réalise les calculs grâce à RK45 et le lancement de la fusée"""
         print(txt_to_print+"\n/!\ DECOLAGE\n"+txt_to_print+"\n")
@@ -235,10 +189,7 @@ class Computer:
                 for k in range(7):
                     self.data_y[k].append(self.solution[-1].y[k][j])
                     pass
-<<<<<<< HEAD
         #Calcul gravity turn
-=======
->>>>>>> abeb66741760c6beffac0c3cf6a78324f45a2847
 
         #Ecriture des donnée dans un fichier
         """    with open("flight_data.csv",'w') as file:
@@ -248,20 +199,12 @@ class Computer:
         #Affichage
         GUI = Graphics(self)
         GUI.display_animation(self.data_t, self.data_y)
-<<<<<<< HEAD
         GUI.display_plane()
         #self.display()
 
 
     def display(self):
         fig = plt.figure(figsize=plt.figaspect(0.8)*2)      #pour que la sphère ressemble à une sphère (credit : https://stackoverflow.com/questions/8130823/set-matplotlib-3d-plot-aspect-ratio/12371373)
-=======
-        self.display()
-
-
-    def display(self):
-        fig = plt.figure(figsize=plt.figaspect(0.8)*2)
->>>>>>> abeb66741760c6beffac0c3cf6a78324f45a2847
         ax = fig.gca(projection='3d')
         u, v = np.mgrid[0:2*np.pi:40j, 0:np.pi:20j]     #technique allègrement volée ici https://stackoverflow.com/questions/11140163/plotting-a-3d-cube-a-sphere-and-a-vector-in-matplotlib
         x_earth = self.environment.r_earth*np.cos(u)*np.sin(v)
@@ -269,18 +212,13 @@ class Computer:
         z_earth = self.environment.r_earth*np.cos(v)
         ax.plot_surface(x_earth, y_earth, z_earth, rstride=1, cstride=1, cmap='magma', alpha = 0.5)
         #ax.plot_wireframe(x_earth, y_earth, z_earth, color='r')
-<<<<<<< HEAD
         #ax.plot_wireframe(x_earth, y_earth, z_earth, color='b')
-=======
-        #ax.plot_surface(x_earth, y_earth, z_earth, color='b')
->>>>>>> abeb66741760c6beffac0c3cf6a78324f45a2847
         ax.quiver(0,0,0,1,0,0,length=self.environment.r_earth)
         ax.quiver(0,0,0,0,1,0,length=self.environment.r_earth)
         ax.quiver(0,0,0,0,0,1,length=self.environment.r_earth)
 
         for sol in self.solution:
             ax.plot(sol.y[0], sol.y[1], sol.y[2])
-<<<<<<< HEAD
         plt.show()
 
         #DEBUG ZONE -------------------------------------------------------------------------------------------------------------------------
@@ -302,36 +240,9 @@ class Computer:
 
 
 
-=======
-            plt.title('Orbit Map')
-        plt.show()
-
-        for sol in self.solution:
-            plt.plot(sol.t, np.sqrt(sol.y[0]**2 + sol.y[1]**2+sol.y[2]**2)-self.environment.r_earth)
-        plt.title("Hauteur de l'orbite en fonction du temps")
-        plt.grid()
-        plt.xlabel("Temps (s)")
-        plt.ylabel("Altitude (km)")
-        plt.show()
-
-        for sol in self.solution:
-            plt.plot(sol.t, sol.y[6])
-        plt.title("Masse de la fusée en fonction du temps")
-        plt.xlabel("Temps (s)")
-        plt.ylabel("Masse (kg)")
-        plt.grid()
-        plt.show()
-
-        #DEBUG ZONE -------------------------------------------------------------------------------------------------------------------------
-
->>>>>>> abeb66741760c6beffac0c3cf6a78324f45a2847
 
 if __name__ == "__main__":
 
     self = Computer()
-<<<<<<< HEAD
     #self.environment = Environment(M_earth = 5.2915e22, r_earth = 600000)      #ksp, bah putain c vraiment plus facile que la vrai vie...
     self.launch([45,0])
-=======
-    self.launch([5,0])
->>>>>>> abeb66741760c6beffac0c3cf6a78324f45a2847
