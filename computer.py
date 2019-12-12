@@ -278,4 +278,3 @@ if __name__ == "__main__":
 
     #self.environment = Environment(M_earth = 5.2915e22, r_earth = 600000)      #ksp, bah putain c vraiment plus facile que la vrai vie...
     self.launch([45,0])
-
