@@ -28,9 +28,15 @@ class Graphics:
             self.x.append(self.data_y[0][self.i])
             self.y.append(self.data_y[1][self.i])
             self.z.append(self.data_y[2][self.i])
+<<<<<<< HEAD
             self.i += 3
 
         self.t_anim += 30
+=======
+            self.i += 1
+
+        self.t_anim += 10
+>>>>>>> abeb66741760c6beffac0c3cf6a78324f45a2847
 
         self.ax.clear()
 
@@ -39,13 +45,21 @@ class Graphics:
         y_earth = self.environment.r_earth*np.sin(u + self.environment.freq_rot*2*math.pi*self.t_anim)*np.sin(v)
         z_earth = self.environment.r_earth*np.cos(v)
         #self.ax.plot_surface(x_earth, y_earth, z_earth, rstride=1, cstride=1, cmap='magma', alpha = 0.5)
+<<<<<<< HEAD
         self.ax.plot_wireframe(x_earth, y_earth, z_earth, color='b', alpha = 0.5)
+=======
+        self.ax.plot_surface(x_earth, y_earth, z_earth, color='b', alpha = 0.5)
+>>>>>>> abeb66741760c6beffac0c3cf6a78324f45a2847
 
         self.ax.set_xlim(-self.r_max*1.1, self.r_max*1.1)
         self.ax.set_ylim(-self.r_max*1.1, self.r_max*1.1)
         self.ax.set_zlim(-self.r_max*1.1, self.r_max*1.1)
 
+<<<<<<< HEAD
         self.ax.plot(self.x, self.y, self.z, color = 'r')
+=======
+        self.ax.plot(self.x, self.y, self.z)
+>>>>>>> abeb66741760c6beffac0c3cf6a78324f45a2847
 
     def display_animation(self, data_t, data_y):
         self.data_t = data_t
@@ -54,7 +68,11 @@ class Graphics:
         r_2 = [data_y[0][i]**2 + data_y[1][i]**2 + data_y[2][i]**2 for i in range(self.lenght)]
         self.r_max = math.sqrt(max(r_2))
 
+<<<<<<< HEAD
         fig = plt.figure()
+=======
+        fig = plt.figure(figsize=plt.figaspect(0.8)*2)
+>>>>>>> abeb66741760c6beffac0c3cf6a78324f45a2847
         self.ax = fig.add_subplot(111, projection='3d')
 
         self.t_anim = 0
@@ -64,6 +82,7 @@ class Graphics:
         #Writer = anim.writers['ffmpeg']
         #writer = Writer(fps=15, metadata=dict(artist='Me'), bitrate=1800)
         #ani.save('gif animation_1.mp4', writer=writer)
+<<<<<<< HEAD
         plt.axis('scaled')
         plt.show()
 
@@ -89,4 +108,6 @@ class Graphics:
         #ax.set_xlim(-self.r_max*1.1, self.r_max*1.1)
         #ax.set_ylim(-self.r_max*1.1, self.r_max*1.1)
         plt.legend(loc='upper right')
+=======
+>>>>>>> abeb66741760c6beffac0c3cf6a78324f45a2847
         plt.show()
