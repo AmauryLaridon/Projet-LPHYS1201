@@ -77,8 +77,8 @@ class Rocket:
         """Permet de créer directement une fusée de type Soyuz modifiée pour se mettre en orbite plus facilement"""
         self.reset()
         self.add_stage('payload', 'Module Soyuz', 7000, 0, 0, 2.86, 0)
-        self.add_stage('stage', 'Troisième étage', 2250, 25200, 425000, 2.78, 105)
-        self.add_stage('stage', 'Deuxième étage', 6500, 105000, 1060000, 3.42, 350)
+        self.add_stage('stage', 'Troisième étage', 2250, 25200, 300000, 2.78, 105)
+        self.add_stage('stage', 'Deuxième étage', 6500, 105000, 1000000, 3.42, 350)
         self.add_stage('booster', 'Boosters', 4*3500, 4*40000, 4*1000000, 4*2.82, 4*333.33)
         self.update()
         print("La fusée est maintenant une fusée Soyuz.")
