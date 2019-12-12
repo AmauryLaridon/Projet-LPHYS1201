@@ -20,6 +20,9 @@ class Computer:
         self.environment   = Environment()
         self.solution      = []
         self.v_rad_reached = 0
+        self.do_the_g      = True
+        self.data_tg       = [[], []]
+        self.display_name  = []
 
     def coord_to_rad(self, position):
         """Converti les coordonnées angulaires données en degré en radian"""
@@ -134,6 +137,10 @@ class Computer:
             eng_dir = self.normal_acceleration(self.orb_dir, r_hat)
 
         a_x, a_y, a_z = a_grav*r_hat - rho*v_rel*self.rocket.C_A*V_rel/(2*M) + a_eng*eng_dir
+        a_g = np.array([a_x, a_y, a_z]) - a_grav*r_hat
+        g = np.linalg.norm(a_g)/9.81
+        self.data_tg[0].append(t)
+        self.data_tg[1].append(g)
 
         return np.array([v_x, v_y, v_z, a_x, a_y, a_z, dM])
 
@@ -170,6 +177,7 @@ class Computer:
             T = self.rocket.stage_time()
             self.solution.append(ode.solve_ivp(self.radial_launch, (t_0,T+t_0), Y, vectorized = False, max_step = T/500))
             print("Découplage du "+self.rocket.stage[-1].name +" après :"+str(T+t_0)+"s")
+            self.display_name.append(self.rocket.stage[-1].name)
             self.rocket.decouple()
             for j in range(7):
                 Y[j] = self.solution[i].y[j][-1]
@@ -180,7 +188,8 @@ class Computer:
         Y[6] = self.rocket.M
         t_0 += T
         #T = 6000
-        T = 8500
+        T = 8500*2
+        self.display_name.append(self.rocket.stage[-1].name)
         self.solution.append(ode.solve_ivp(self.radial_launch, (t_0,T+t_0), Y, vectorized = False, max_step = T/1000))
         for j in range(7):
             Y[j] = self.solution[-1].y[j][-1]
@@ -200,36 +209,48 @@ class Computer:
         GUI = Graphics(self)
         GUI.display_animation(self.data_t, self.data_y)
         GUI.display_plane()
-        #self.display()
+        self.display()
 
 
     def display(self):
-        fig = plt.figure(figsize=plt.figaspect(0.8)*2)      #pour que la sphère ressemble à une sphère (credit : https://stackoverflow.com/questions/8130823/set-matplotlib-3d-plot-aspect-ratio/12371373)
+        """fig = plt.figure(figsize=plt.figaspect(0.8)*2)      #pour que la sphère ressemble à une sphère (credit : https://stackoverflow.com/questions/8130823/set-matplotlib-3d-plot-aspect-ratio/12371373)
         ax = fig.gca(projection='3d')
         u, v = np.mgrid[0:2*np.pi:40j, 0:np.pi:20j]     #technique allègrement volée ici https://stackoverflow.com/questions/11140163/plotting-a-3d-cube-a-sphere-and-a-vector-in-matplotlib
         x_earth = self.environment.r_earth*np.cos(u)*np.sin(v)
         y_earth = self.environment.r_earth*np.sin(u)*np.sin(v)
         z_earth = self.environment.r_earth*np.cos(v)
-        ax.plot_surface(x_earth, y_earth, z_earth, rstride=1, cstride=1, cmap='magma', alpha = 0.5)
+        #ax.plot_surface(x_earth, y_earth, z_earth, rstride=1, cstride=1, cmap='magma', alpha = 0.5)"""
         #ax.plot_wireframe(x_earth, y_earth, z_earth, color='r')
         #ax.plot_wireframe(x_earth, y_earth, z_earth, color='b')
-        ax.quiver(0,0,0,1,0,0,length=self.environment.r_earth)
-        ax.quiver(0,0,0,0,1,0,length=self.environment.r_earth)
-        ax.quiver(0,0,0,0,0,1,length=self.environment.r_earth)
+        #ax.quiver(0,0,0,1,0,0,length=self.environment.r_earth)
+        #ax.quiver(0,0,0,0,1,0,length=self.environment.r_earth)
+        #ax.quiver(0,0,0,0,0,1,length=self.environment.r_earth)
 
-        for sol in self.solution:
-            ax.plot(sol.y[0], sol.y[1], sol.y[2])
+        #for sol in self.solution:
+        #    ax.plot(sol.y[0], sol.y[1], sol.y[2])
+        #plt.show()
+
+        plt.plot(self.data_tg[0], self.data_tg[1])
+        plt.title("Nombre de g que subit Jebediah Kerman durant le vol.")
+        plt.xlabel("Temps(s)")
+        plt.ylabel("Nombre de g (m/s²)")
+        plt.grid()
+
+        plt.show()
+
+        for i in range(len(self.solution)):
+            plt.plot(self.solution[i].t, np.sqrt(self.solution[i].y[0]**2 + self.solution[i].y[1]**2+self.solution[i].y[2]**2)-self.environment.r_earth, label = self.display_name[i])
+        plt.title("Hauteur de l'orbite en fonction du temps.")
+        plt.xlabel("Temps(s)")
+        plt.ylabel("Hauteur de l'orbite (m)")
+        plt.legend()
+        plt.grid()
         plt.show()
 
         #DEBUG ZONE -------------------------------------------------------------------------------------------------------------------------
 
-        #for sol in self.solution:
-        #    plt.plot(sol.t, sol.y[3])
-        #plt.show()
-        for sol in self.solution:
-            plt.plot(sol.t, np.sqrt(sol.y[0]**2 + sol.y[1]**2+sol.y[2]**2)-self.environment.r_earth)
-        plt.title('h')
-        plt.show()
+
+
          #c'est juste pour vérifier la masse
         #for sol in self.solution:
         #    plt.plot(sol.t, sol.y[6])

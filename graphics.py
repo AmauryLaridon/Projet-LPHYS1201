@@ -19,6 +19,7 @@ class Graphics:
         self.z = []
         self.data_t = []
         self.data_y = []
+        self.computer = computer
         self.environment = computer.environment
         self.rocket = computer.rocket
 
