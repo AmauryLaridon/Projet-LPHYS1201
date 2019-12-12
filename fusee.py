@@ -72,6 +72,17 @@ class Rocket:
             self.stage.pop()
         print("Vous venez de supprimer un étage")
 
+        #----------TYPE DE FUSÉES----------#
+    def create_soyuz(self):
+        """Permet de créer directement une fusée de type Soyuz modifiée pour se mettre en orbite plus facilement"""
+        self.reset()
+        self.add_stage('payload', 'Module Soyuz', 7000, 0, 0, 2.86, 0)
+        self.add_stage('stage', 'Troisième étage', 2250, 25200, 300000, 2.78, 105)
+        self.add_stage('stage', 'Deuxième étage', 6500, 105000, 1000000, 3.42, 350)
+        self.add_stage('booster', 'Boosters', 4*3500, 4*40000, 4*1000000, 4*2.82, 4*333.33)
+        self.update()
+        print("La fusée est maintenant une fusée Soyuz.")
+
     def create_soyuz_mod(self):
         """Permet de créer directement une fusée de type Soyuz"""
         self.reset()
@@ -80,8 +91,26 @@ class Rocket:
         self.add_stage('stage', 'Deuxième étage', 6500, 105000, 1060000, 3.42, 350)
         self.add_stage('booster', 'Boosters', 4*3500, 4*40000, 4*1000000, 4*2.82, 4*333.33)
         self.update()
-        print("La fusée est maintenant une fusée Soyuz.")
+        print("La fusée est maintenant une fusée de type Soyuz légèrement modifée afin de pouvoir se mettre en orbite plus facilement.")
 
+    def create_falcon_9(self):
+        """Permet de créer directement une fusée de type Falcon 9"""
+        self.reset()
+        self.add_stage('payload', 'Satellite', 5000, 0, 0, 2.00, 0)
+        self.add_stage('stage', 'Deuxième étage', 4000, 108000, 934000, 2.78, 272)
+        self.add_stage('stage', 'Première étage', 23000, 388000, 6805000, 3.42, 2395)
+        self.update()
+        print("La fusée est maintenant une fusée de type Falcon 9")
+
+    def create_falcon_heavy(self):
+        """Permet de créer directement une fusée de type Falcon heavy"""
+        self.reset()
+        self.add_stage('payload', 'Satellite', 5000, 0, 0, 2.00, 0)
+        self.add_stage('stage', 'Deuxième étage', 4000, 108000, 934000, 2.78, 272)
+        self.add_stage('stage', 'Première étage', 23000, 388000, 6805000, 3.42, 2395)
+        self.add_stage('booster', 'Boosters', 2*23000, 2*388000, 2*6805000, 2*3.42, 2*2395)
+        self.update()
+        print("La fusée est maintenant une fusée de type Falcon heavy")
 
     def reset(self):
         """supprime l'intégralité des étages de la fusée."""
@@ -163,3 +192,6 @@ class Rocket:
             self.M -= self.stage[-2].C * T
         self.stage.pop()
         self.update()
+
+    def display(self):
+        pass
