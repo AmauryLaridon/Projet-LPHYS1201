@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as anim
 import csv
+import os
 
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
@@ -11,6 +12,7 @@ from matplotlib import cm
 from fusee import *
 from environnement import *
 from graphics import *
+
 
 #-----------------------------CLASSE QUI PERMET D EFFECTUER TOUS LES CALCULS ET DE LES AFFICHER--------------------------#
 class Computer:
@@ -89,6 +91,17 @@ class Computer:
 
         return np.array([v_x, v_y, 0])
 
+    def orbital_direction(self, X, V):
+        """Défini le vecteur normal au plan de l'orbite"""
+        XxV = np.cross(X, V)
+        orbital_direction = XxV/np.linalg.norm(XxV)
+        return orbital_direction
+
+    def normal_acceleration(self, orbital_direction, r_hat):
+        """Fonction à implémenter dans RK45 pour avoir une circularisation de l'orbite après la première phase du vol"""
+        thrust_direction = np.cross(orbital_direction, r_hat)
+        return thrust_direction
+
     def radial_launch(self, t, X):
         """fonction a implementer dans RK-45 pour un lancement purement radiale"""
         #Variables de positions et de vitesse.
@@ -114,7 +127,7 @@ class Computer:
         v_rel = np.linalg.norm(V_rel)
 
         #Défini la densité de l'air
-        if r < self.environment.r_earth + 45000:
+        if r < self.environment.r_earth + 44330:
             rho = self.environment.air_density(r)
         else:
             rho = 0
@@ -144,16 +157,6 @@ class Computer:
 
         return np.array([v_x, v_y, v_z, a_x, a_y, a_z, dM])
 
-    def orbital_direction(self, X, V):
-        """Défini le vecteur normal au plan de l'orbite"""
-        XxV = np.cross(X, V)
-        orbital_direction = XxV/np.linalg.norm(XxV)
-        return orbital_direction
-
-    def normal_acceleration(self, orbital_direction, r_hat):
-        """Fonction à implémenter dans RK45 pour avoir une circularisation de l'orbite après la première phase du vol"""
-        thrust_direction = np.cross(orbital_direction, r_hat)
-        return thrust_direction
 
     def launch(self, position):
         """Réalise les calculs grâce à RK45 et le lancement de la fusée"""
@@ -170,12 +173,12 @@ class Computer:
         self.data_y = [[],[],[],[],[],[],[]]
         self.orb_dir = self.orbital_direction(X, V)
 
-        #Calcul radial launch
+        #Calcul radial launch pour les étages possédant du fuel
         for i in range(len(self.rocket.stage)-1):
             Y[6] = self.rocket.M
             t_0 += T
             T = self.rocket.stage_time()
-            self.solution.append(ode.solve_ivp(self.radial_launch, (t_0,T+t_0), Y, vectorized = False, max_step = T/500))
+            self.solution.append(ode.solve_ivp(fun = self.radial_launch, t_span = (t_0,T+t_0), y0 = Y, vectorized = False, max_step = T/500))
             print("Découplage du "+self.rocket.stage[-1].name +" après :"+str(T+t_0)+"s")
             self.display_name.append(self.rocket.stage[-1].name)
             self.rocket.decouple()
@@ -185,12 +188,13 @@ class Computer:
                 self.data_t.append(self.solution[i].t[j])
                 for k in range(7):
                     self.data_y[k].append(self.solution[i].y[k][j])
+
+        #Calcul du restant de l'orbite une fois qu'il reste uniquement la payload
         Y[6] = self.rocket.M
         t_0 += T
-        #T = 6000
-        T = 8500*2
+        T = 10000
         self.display_name.append(self.rocket.stage[-1].name)
-        self.solution.append(ode.solve_ivp(self.radial_launch, (t_0,T+t_0), Y, vectorized = False, max_step = T/1000))
+        self.solution.append(ode.solve_ivp(fun = self.radial_launch, t_span = (t_0,T+t_0), y0 = Y, vectorized = False, max_step = T/1000))
         for j in range(7):
             Y[j] = self.solution[-1].y[j][-1]
         for j in range(len(self.solution[-1].t)):
@@ -198,13 +202,25 @@ class Computer:
                 for k in range(7):
                     self.data_y[k].append(self.solution[-1].y[k][j])
                     pass
-        #Calcul gravity turn
 
         #Ecriture des donnée dans un fichier
-        """    with open("flight_data.csv",'w') as file:
+        with open("flight_data.csv",'a') as file:
+            if os.stat("flight_data.csv").st_size == 0:
+                #On pose une référence à self.solution parce qu'aussi non la longueur de notre ligne de code
+                #est trop grande pour être prise en compte.
+                a = self.solution
                 writer = csv.writer(file)
-                writer.writerow(["Coordonnées cartésiennes x/y/z","Vitesse selon x/y/z", "Masse totale de la fusée"])
-                writer.writerow([self.solution[0].t, self.data_y[0:3], self.data_y[3:6], self.data_y[6]])"""
+                writer.writerow(["t","x","y","z","v_x","v_y","v_z","M"])
+                for i in range(len(self.solution)):
+                    for j in range(len(self.solution[i].t)):
+                        writer.writerow([a[i].t[j], a[i].y[0][j], a[i].y[1][j], a[i].y[2][j], a[i].y[3][j], a[i].y[4][j], a[i].y[5][j], a[i].y[6][j]])
+
+    """    #Hauteur de la fusée
+        for i in range(len(self.solution)):
+            hauteur_fusee = np.sqrt(self.solution[i].y[0]**2 + self.solution[i].y[1]**2+self.solution[i].y[2]**2)-self.environment.r_earth
+        if hauteur_fusee == 0:
+            print("CRASH!")"""
+
         #Affichage
         GUI = Graphics(self)
         GUI.display_animation(self.data_t, self.data_y)
@@ -213,33 +229,19 @@ class Computer:
 
 
     def display(self):
-        """fig = plt.figure(figsize=plt.figaspect(0.8)*2)      #pour que la sphère ressemble à une sphère (credit : https://stackoverflow.com/questions/8130823/set-matplotlib-3d-plot-aspect-ratio/12371373)
-        ax = fig.gca(projection='3d')
-        u, v = np.mgrid[0:2*np.pi:40j, 0:np.pi:20j]     #technique allègrement volée ici https://stackoverflow.com/questions/11140163/plotting-a-3d-cube-a-sphere-and-a-vector-in-matplotlib
-        x_earth = self.environment.r_earth*np.cos(u)*np.sin(v)
-        y_earth = self.environment.r_earth*np.sin(u)*np.sin(v)
-        z_earth = self.environment.r_earth*np.cos(v)
-        #ax.plot_surface(x_earth, y_earth, z_earth, rstride=1, cstride=1, cmap='magma', alpha = 0.5)"""
-        #ax.plot_wireframe(x_earth, y_earth, z_earth, color='r')
-        #ax.plot_wireframe(x_earth, y_earth, z_earth, color='b')
-        #ax.quiver(0,0,0,1,0,0,length=self.environment.r_earth)
-        #ax.quiver(0,0,0,0,1,0,length=self.environment.r_earth)
-        #ax.quiver(0,0,0,0,0,1,length=self.environment.r_earth)
 
-        #for sol in self.solution:
-        #    ax.plot(sol.y[0], sol.y[1], sol.y[2])
-        #plt.show()
-
+        #Affichage des g au cours du vol
         plt.plot(self.data_tg[0], self.data_tg[1])
         plt.title("Nombre de g que subit Jebediah Kerman durant le vol.")
         plt.xlabel("Temps(s)")
         plt.ylabel("Nombre de g (m/s²)")
         plt.grid()
-
         plt.show()
 
+        #Affichage de la hauteur de l'orbite au cours du vol
         for i in range(len(self.solution)):
             plt.plot(self.solution[i].t, np.sqrt(self.solution[i].y[0]**2 + self.solution[i].y[1]**2+self.solution[i].y[2]**2)-self.environment.r_earth, label = self.display_name[i])
+        plt.axhline(y=44300, label='Atmosphère', c = 'c')
         plt.title("Hauteur de l'orbite en fonction du temps.")
         plt.xlabel("Temps(s)")
         plt.ylabel("Hauteur de l'orbite (m)")
@@ -247,23 +249,21 @@ class Computer:
         plt.grid()
         plt.show()
 
+        #Affichage de la masse de la fusée au cours du vol
+        for i in range(len(self.solution)):
+            plt.plot(self.solution[i].t, self.solution[i].y[6], label = self.display_name[i])
+        plt.title("Evolution de la masse totale de la fusée au cours du vol.")
+        plt.xlabel("Temps(s)")
+        plt.ylabel("Masse totale en (kg)")
+        plt.legend()
+        plt.grid()
+        plt.show()
+
         #DEBUG ZONE -------------------------------------------------------------------------------------------------------------------------
-
-
-
-         #c'est juste pour vérifier la masse
-        #for sol in self.solution:
-        #    plt.plot(sol.t, sol.y[6])
-        #plt.show()
-
-
-
-
-
 
 
 if __name__ == "__main__":
 
     self = Computer()
     #self.environment = Environment(M_earth = 5.2915e22, r_earth = 600000)      #ksp, bah putain c vraiment plus facile que la vrai vie...
-    self.launch([45,0])
+    self.launch([5,-52])
