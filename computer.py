@@ -12,19 +12,21 @@ from matplotlib import cm
 from fusee import *
 from environnement import *
 from graphics import *
+from parameters import *
 
 
-#-----------------------------CLASSE QUI PERMET D EFFECTUER TOUS LES CALCULS ET DE LES AFFICHER--------------------------#
+#---------------------------------------CLASSE QUI PERMET D EFFECTUER TOUS LES CALCULS ET DE LES AFFICHER----------------------------------#
 class Computer:
     def __init__(self):
-        self.rocket        = Rocket()
-        self.rocket.create_soyuz_mod()
-        self.environment   = Environment()
-        self.solution      = []
-        self.v_rad_reached = 0
-        self.do_the_g      = True
-        self.data_tg       = [[], []]
-        self.display_name  = []
+        self.rocket                     = Rocket()
+        self.rocket.create_soyuz()
+        self.environment                = Environment()
+        self.solution                   = []
+        self.v_rad_reached              = 0
+        self.do_the_g                   = True
+        self.data_tg                    = [[], []]
+        self.display_name               = []
+        self.orbital_txt                = " "
 
     def coord_to_rad(self, position):
         """Converti les coordonnées angulaires données en degré en radian"""
@@ -102,8 +104,12 @@ class Computer:
         thrust_direction = np.cross(orbital_direction, r_hat)
         return thrust_direction
 
+    def test2(self, h, r_hat):
+        dir = math.cos(h/200000) * r_hat + math.sin(h/200000) * np.cross(self.orb_dir, r_hat) #22000 c sympa
+        return dir
+
     def radial_launch(self, t, X):
-        """fonction a implementer dans RK-45 pour un lancement purement radiale"""
+        """Fonction a implementer dans RK-45 pour un lancement purement radiale"""
         #Variables de positions et de vitesse.
         x, y, z, v_x, v_y, v_z, M = X
 
@@ -127,10 +133,21 @@ class Computer:
         v_rel = np.linalg.norm(V_rel)
 
         #Défini la densité de l'air
-        if r < self.environment.r_earth + 44330:
-            rho = self.environment.air_density(r)
+        if parameter['cool_ath_model']:
+            rho = self.environment.US_standart(r)
         else:
-            rho = 0
+            rho = self.environment.air_density(r)
+
+        #Calcul de l'apoapsis Ap et du périapsis Pe
+        delta = (self.environment.G ** 2) * (self.environment.M_earth ** 2) + r ** 2 * (np.linalg.norm(np.cross(V, r_hat)) ** 2) * (np.linalg.norm(V) ** 2 - 2 * self.environment.G * self.environment.M_earth / r)
+        if delta > 0:
+            Pe_p = (-self.environment.G * self.environment.M_earth + math.sqrt(delta)) / (np.linalg.norm(V) ** 2 - 2 * self.environment.G * self.environment.M_earth / r)
+            Pe_m = (-self.environment.G * self.environment.M_earth - math.sqrt(delta)) / (np.linalg.norm(V) ** 2 - 2 * self.environment.G * self.environment.M_earth / r)
+            # print(Pe_p, " ............... ", Pe_m)
+        else:
+            Pe_p = 0
+            Pe_m = 0
+            print("FUCK")
 
         #Variation de masse
         dM = -self.rocket.C - self.rocket.C_boost
@@ -144,14 +161,44 @@ class Computer:
             eng_dir = math.cos(0.2)*r_hat + math.sin(0.2)*self.normal_acceleration(self.orb_dir, r_hat)
             eng_dir = eng_dir/np.linalg.norm(eng_dir)
         elif not self.v_rad_reached:
-            eng_dir = math.sin(theta)*V/np.linalg.norm(V) + math.cos(theta)*r_hat
-            eng_dir = eng_dir/np.linalg.norm(eng_dir)
+            #eng_dir = math.sin(self.theta_0) * V / np.linalg.norm(V) + math.cos(self.theta_0) * r_hat
+            eng_dir = self.test2(r - self.environment.r_earth, r_hat)
+            eng_dir = eng_dir / np.linalg.norm(eng_dir)
         else:
             eng_dir = self.normal_acceleration(self.orb_dir, r_hat)
 
-        a_x, a_y, a_z = a_grav*r_hat - rho*v_rel*self.rocket.C_A*V_rel/(2*M) + a_eng*eng_dir
-        a_g = np.array([a_x, a_y, a_z]) - a_grav*r_hat
-        g = np.linalg.norm(a_g)/9.81
+        # vérifie si on est en orbite
+        if delta > 0:
+            if Pe_m >= self.environment.r_earth + 400000 - 500 and Pe_p >= self.environment.r_earth + 400000 - 500:
+                a_eng = 0
+                dM = 0
+                orbital_txt = "Vous êtes en orbite stable !"
+        # if self.test:
+        #    a_eng = 0
+        if parameter["better friction"]:
+            """
+            cos = abs(np.dot(eng_dir, V_rel/np.linalg.norm(V_rel)))
+            sin = math.sqrt(1 - cos**2)
+            S = 0
+            for i in range(len(self.rocket.stage)):
+                s = math.pi * self.rocket.stage[i].r**2 * cos + self.rocket.stage[i].r * self.rocket.stage[i].L * sin
+                if i > 1:
+                    s_ = sum([self.rocket.stage[j].L * self.rocket.stage[j].L * sin for j in range(i)])
+                else:
+                    s_ = 0
+                if s_ >
+                S +=
+            C_A = 0
+            """
+            pass
+        else:
+            C_A = self.rocket.C_A
+
+
+        a_x, a_y, a_z = a_grav * r_hat - rho * v_rel * C_A * V_rel / (2 * M) + a_eng * eng_dir
+
+        a_g = np.array([a_x, a_y, a_z]) - a_grav * r_hat
+        g = np.linalg.norm(a_g) / 9.81
         self.data_tg[0].append(t)
         self.data_tg[1].append(g)
 
@@ -169,8 +216,9 @@ class Computer:
         Y = Y + [0]
         T = 0
         t_0 = 0
+        self.theta_0 = angles[0]
         self.data_t = []
-        self.data_y = [[],[],[],[],[],[],[]]
+        self.data_y = [[], [], [], [], [], [], []]
         self.orb_dir = self.orbital_direction(X, V)
 
         #Calcul radial launch pour les étages possédant du fuel
@@ -215,52 +263,26 @@ class Computer:
                     for j in range(len(self.solution[i].t)):
                         writer.writerow([a[i].t[j], a[i].y[0][j], a[i].y[1][j], a[i].y[2][j], a[i].y[3][j], a[i].y[4][j], a[i].y[5][j], a[i].y[6][j]])
 
-    """    #Hauteur de la fusée
+        #Affichage de si nous sommes dans l'espace ou en train de nous crasher lamentablement
         for i in range(len(self.solution)):
             hauteur_fusee = np.sqrt(self.solution[i].y[0]**2 + self.solution[i].y[1]**2+self.solution[i].y[2]**2)-self.environment.r_earth
-        if hauteur_fusee == 0:
-            print("CRASH!")"""
+            if hauteur_fusee[i] >= 44300:
+                print("Bienvenue dans l'espace !")
+                break
+            if hauteur_fusee[i] <0:
+                print("CRASH!")
+                break
+
+
 
         #Affichage
         GUI = Graphics(self)
-        GUI.display_animation(self.data_t, self.data_y)
+        GUI.display_3D_animation(GUI.animation2, self.data_t, self.data_y)
+        GUI.display_2D_animation(GUI.animation_2D, self.data_t, self.data_y)
         GUI.display_plane()
-        self.display()
-
-
-    def display(self):
-
-        #Affichage des g au cours du vol
-        plt.plot(self.data_tg[0], self.data_tg[1])
-        plt.title("Nombre de g que subit Jebediah Kerman durant le vol.")
-        plt.xlabel("Temps(s)")
-        plt.ylabel("Nombre de g (m/s²)")
-        plt.grid()
-        plt.show()
-
-        #Affichage de la hauteur de l'orbite au cours du vol
-        for i in range(len(self.solution)):
-            plt.plot(self.solution[i].t, np.sqrt(self.solution[i].y[0]**2 + self.solution[i].y[1]**2+self.solution[i].y[2]**2)-self.environment.r_earth, label = self.display_name[i])
-        plt.axhline(y=44300, label='Atmosphère', c = 'c')
-        plt.title("Hauteur de l'orbite en fonction du temps.")
-        plt.xlabel("Temps(s)")
-        plt.ylabel("Hauteur de l'orbite (m)")
-        plt.legend()
-        plt.grid()
-        plt.show()
-
-        #Affichage de la masse de la fusée au cours du vol
-        for i in range(len(self.solution)):
-            plt.plot(self.solution[i].t, self.solution[i].y[6], label = self.display_name[i])
-        plt.title("Evolution de la masse totale de la fusée au cours du vol.")
-        plt.xlabel("Temps(s)")
-        plt.ylabel("Masse totale en (kg)")
-        plt.legend()
-        plt.grid()
-        plt.show()
-
-        #DEBUG ZONE -------------------------------------------------------------------------------------------------------------------------
-
+        GUI.display_g()
+        GUI.display_h()
+        GUI.display_m()
 
 if __name__ == "__main__":
 
