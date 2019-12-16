@@ -281,4 +281,4 @@ class Graphics:
         plt.ylabel("Masse totale en (kg)")
         plt.legend()
         plt.grid()
-        plt.show()    
+        plt.show()

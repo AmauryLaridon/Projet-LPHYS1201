@@ -19,7 +19,7 @@ from parameters import *
 class Computer:
     def __init__(self):
         self.rocket                     = Rocket()
-        self.rocket.create_soyuz()
+        self.rocket.create_soyuz_mod()
         self.environment                = Environment()
         self.solution                   = []
         self.v_rad_reached              = 0
