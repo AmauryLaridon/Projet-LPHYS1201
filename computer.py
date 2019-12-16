@@ -12,19 +12,20 @@ from matplotlib import cm
 from fusee import *
 from environnement import *
 from graphics import *
+from parameters import *
 
 
-#-----------------------------CLASSE QUI PERMET D EFFECTUER TOUS LES CALCULS ET DE LES AFFICHER--------------------------#
+#---------------------------------------CLASSE QUI PERMET D EFFECTUER TOUS LES CALCULS ET DE LES AFFICHER----------------------------------#
 class Computer:
     def __init__(self):
-        self.rocket        = Rocket()
+        self.rocket                     = Rocket()
         self.rocket.create_soyuz_mod()
-        self.environment   = Environment()
-        self.solution      = []
-        self.v_rad_reached = 0
-        self.do_the_g      = True
-        self.data_tg       = [[], []]
-        self.display_name  = []
+        self.environment                = Environment()
+        self.solution                   = []
+        self.v_rad_reached              = 0
+        self.do_the_g                   = True
+        self.data_tg                    = [[], []]
+        self.display_name               = []
 
     def coord_to_rad(self, position):
         """Converti les coordonnées angulaires données en degré en radian"""
@@ -102,8 +103,12 @@ class Computer:
         thrust_direction = np.cross(orbital_direction, r_hat)
         return thrust_direction
 
+     def test2(self, h, r_hat):
+        dir = math.cos(h/200000) * r_hat + math.sin(h/200000) * np.cross(self.orb_dir, r_hat) #22000 c sympa
+        return dir
+
     def radial_launch(self, t, X):
-        """fonction a implementer dans RK-45 pour un lancement purement radiale"""
+        """Fonction a implementer dans RK-45 pour un lancement purement radiale"""
         #Variables de positions et de vitesse.
         x, y, z, v_x, v_y, v_z, M = X
 
@@ -127,10 +132,21 @@ class Computer:
         v_rel = np.linalg.norm(V_rel)
 
         #Défini la densité de l'air
-        if r < self.environment.r_earth + 44330:
-            rho = self.environment.air_density(r)
+        if parameter['cool_ath_model']:
+            rho = self.environment.US_standart(r)
         else:
-            rho = 0
+            rho = self.environment.air_density(r)
+
+        #Calcul de l'apoapsis Ap et du périapsis Pe
+        delta = (self.environment.G ** 2) * (self.environment.M_earth ** 2) + r ** 2 * (np.linalg.norm(np.cross(V, r_hat)) ** 2) * (np.linalg.norm(V) ** 2 - 2 * self.environment.G * self.environment.M_earth / r)
+        if delta > 0:
+            Pe_p = (-self.environment.G * self.environment.M_earth + math.sqrt(delta)) / (np.linalg.norm(V) ** 2 - 2 * self.environment.G * self.environment.M_earth / r)
+            Pe_m = (-self.environment.G * self.environment.M_earth - math.sqrt(delta)) / (np.linalg.norm(V) ** 2 - 2 * self.environment.G * self.environment.M_earth / r)
+            # print(Pe_p, " ............... ", Pe_m)
+        else:
+            Pe_p = 0
+            Pe_m = 0
+            print("FUCK")
 
         #Variation de masse
         dM = -self.rocket.C - self.rocket.C_boost
@@ -144,14 +160,43 @@ class Computer:
             eng_dir = math.cos(0.2)*r_hat + math.sin(0.2)*self.normal_acceleration(self.orb_dir, r_hat)
             eng_dir = eng_dir/np.linalg.norm(eng_dir)
         elif not self.v_rad_reached:
-            eng_dir = math.sin(theta)*V/np.linalg.norm(V) + math.cos(theta)*r_hat
-            eng_dir = eng_dir/np.linalg.norm(eng_dir)
+            #eng_dir = math.sin(self.theta_0) * V / np.linalg.norm(V) + math.cos(self.theta_0) * r_hat
+            eng_dir = self.test2(r - self.environment.r_earth, r_hat)
+            eng_dir = eng_dir / np.linalg.norm(eng_dir)
         else:
             eng_dir = self.normal_acceleration(self.orb_dir, r_hat)
 
-        a_x, a_y, a_z = a_grav*r_hat - rho*v_rel*self.rocket.C_A*V_rel/(2*M) + a_eng*eng_dir
-        a_g = np.array([a_x, a_y, a_z]) - a_grav*r_hat
-        g = np.linalg.norm(a_g)/9.81
+        # vérifie si on est en orbite
+        if delta > 0:
+            if Pe_m >= self.environment.r_earth + 400000 - 500 and Pe_p >= self.environment.r_earth + 400000 - 500:
+                a_eng = 0
+                dM = 0
+        # if self.test:
+        #    a_eng = 0
+        if parameter["better friction"]:
+            """
+            cos = abs(np.dot(eng_dir, V_rel/np.linalg.norm(V_rel)))
+            sin = math.sqrt(1 - cos**2)
+            S = 0
+            for i in range(len(self.rocket.stage)):
+                s = math.pi * self.rocket.stage[i].r**2 * cos + self.rocket.stage[i].r * self.rocket.stage[i].L * sin
+                if i > 1:
+                    s_ = sum([self.rocket.stage[j].L * self.rocket.stage[j].L * sin for j in range(i)])
+                else:
+                    s_ = 0
+                if s_ >
+                S +=
+            C_A = 0
+            """
+            pass
+        else:
+            C_A = self.rocket.C_A
+
+
+        a_x, a_y, a_z = a_grav * r_hat - rho * v_rel * C_A * V_rel / (2 * M) + a_eng * eng_dir
+
+        a_g = np.array([a_x, a_y, a_z]) - a_grav * r_hat
+        g = np.linalg.norm(a_g) / 9.81
         self.data_tg[0].append(t)
         self.data_tg[1].append(g)
 
@@ -169,8 +214,9 @@ class Computer:
         Y = Y + [0]
         T = 0
         t_0 = 0
+        self.theta_0 = angles[0]
         self.data_t = []
-        self.data_y = [[],[],[],[],[],[],[]]
+        self.data_y = [[], [], [], [], [], [], []]
         self.orb_dir = self.orbital_direction(X, V)
 
         #Calcul radial launch pour les étages possédant du fuel

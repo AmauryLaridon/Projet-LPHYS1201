@@ -34,10 +34,9 @@ class Rocket:
         self.C_boost = 0
         self.stage = []
 
-    # -------------------------------FONCTIONS LIEES A LA FUSEE--------------------------------- #
+    # -------------------------------CONSTRUCTION DE LA FUSEE--------------------------------- #
     def add_stage(self, stage_type, stage_name, M_empty, M_fuel, P, C_A, C):
         """ajoute une étage à la fusée en partant de la charge utile (le haut)"""
-        # Différents cas
         if len(self.stage) == 0:
             if stage_type != 'payload':
                 print(txt_to_print + "\nBienvenue dans ce programme permettant de simuler la mise en orbite d'une fusée!\n" + txt_to_print)
@@ -75,10 +74,10 @@ class Rocket:
             self.stage.pop()
         print("Vous venez de supprimer un étage")
 
-        # ----------TYPE DE FUSÉES----------#
+    # -----------------------------------------------TYPE DE FUSÉES---------------------------------------------------#
 
     def create_soyuz(self):
-        """Permet de créer directement une fusée de type Soyuz modifiée pour se mettre en orbite plus facilement"""
+        """Permet de créer directement une fusée de type Soyuz"""
         self.reset()
         self.add_stage('payload', 'Module Soyuz', 7000, 0, 0, 2.86, 0)
         self.add_stage('stage', 'Troisième étage', 2250, 25200, 300000, 2.78, 105)
@@ -88,7 +87,7 @@ class Rocket:
         print("La fusée est maintenant une fusée Soyuz.")
 
     def create_soyuz_mod(self):
-        """Permet de créer directement une fusée de type Soyuz"""
+        """Permet de créer directement une fusée de type Soyuz modifié, légèrement plus puissante afin de faciliter la mise en orbite"""
         self.reset()
         self.add_stage('payload', 'Module Soyuz', 7000, 0, 0, 2.86, 0)
         self.add_stage('stage', 'Troisième étage', 2250, 25200, 425000, 2.78, 105)
@@ -115,6 +114,9 @@ class Rocket:
         self.add_stage('booster', 'Boosters', 2 * 23000, 2 * 388000, 2 * 6805000, 2 * 3.42, 2 * 2395)
         self.update()
         print("La fusée est maintenant une fusée de type Falcon heavy")
+
+    #-------------------------------------FONCTIONS LIEES A LA FUSEE--------------------------------------------------#
+
 
     def reset(self):
         """supprime l'intégralité des étages de la fusée."""
@@ -176,19 +178,8 @@ class Rocket:
         t_stage = self.stage[-1].M_fuel / self.stage[-1].C
         return t_stage
 
-    def decoupling(self):
-        """détache le dernier étage. Utilisé lors des calculs"""
-        # if self.stage[-1].M_fuel == 0:
-        print(txt_to_print + "\n/!\ SEPARATION\n" + txt_to_print)
-        self.M -= self.stage[-1].M_empty
-        self.stage.pop()
-        for i in range(len(self.stage)):
-            self.M_fuel_rocket += self.stage[i].M_fuel
-        self.C = self.stage[-1].C
-        self.update()
-
     def decouple(self):
-        """détache le dernier étage"""  # variante de decoupling
+        """détache le dernier étage"""
         print(txt_to_print + "\n/!\ SEPARATION\n" + txt_to_print)
         self.M -= self.stage[-1].M_empty + self.stage[-1].M_fuel
         if self.stage[-1].type == 'booster':
@@ -197,6 +188,3 @@ class Rocket:
             self.M -= self.stage[-2].C * T
         self.stage.pop()
         self.update()
-
-    def display(self):
-        pass
