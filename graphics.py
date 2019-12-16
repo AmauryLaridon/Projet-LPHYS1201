@@ -20,9 +20,9 @@ class Graphics:
         self.z = []
         self.data_t = []
         self.data_y = []
+        self.computer = computer
         self.environment = computer.environment
         self.rocket = computer.rocket
-<<<<<<< HEAD
         self.length = 0
         self.r_max = 0
         self.t_anim = 0
@@ -92,10 +92,6 @@ class Graphics:
         self.ax.plot(self.X[-1], self.Y[-1], self.Z[-1], color='r', alpha=1/self.n)
 
     def animation(self, _):
-=======
-
-    def animation(self,_):
->>>>>>> da7c13dae01ab690cee6eaf85d22b41e7136b2c6
         t_max = self.data_t[-1]
         while t_max - 1 >= self.t_anim >= self.data_t[self.i]:
             self.x.append(self.data_y[0][self.i])
@@ -118,7 +114,6 @@ class Graphics:
         self.ax.set_ylim(-self.r_max * 1.1, self.r_max * 1.1)
         self.ax.set_zlim(-self.r_max * 1.1, self.r_max * 1.1)
 
-<<<<<<< HEAD
         self.ax.plot(self.x, self.y, self.z, color='r')
 
     def animation_2D(self, _):
@@ -188,24 +183,18 @@ class Graphics:
 
             #plt.xlim(-self.r_max * 1.1, self.r_max * 1.1)
             #plt.ylim(-self.r_max * 1.1, self.r_max * 1.1)
-=======
-        self.ax.plot(self.x, self.y, self.z, color = 'r')
->>>>>>> da7c13dae01ab690cee6eaf85d22b41e7136b2c6
 
-    def display_animation(self, data_t, data_y):
+    def display_3D_animation(self, animation, data_t, data_y):
         self.data_t = data_t
         self.data_y = data_y
         self.length = len(self.data_t)
         r_2 = [data_y[0][i] ** 2 + data_y[1][i] ** 2 + data_y[2][i] ** 2 for i in range(self.length)]
         self.r_max = math.sqrt(max(r_2))
-<<<<<<< HEAD
 
         self.X = [[] for i in range(self.n)]
         self.Y = [[] for i in range(self.n)]
         self.Z = [[] for i in range(self.n)]
         self.T = [[] for i in range(self.n)]
-=======
->>>>>>> da7c13dae01ab690cee6eaf85d22b41e7136b2c6
 
         fig = plt.figure()
         self.ax = fig.add_subplot(111, projection='3d')
@@ -213,7 +202,6 @@ class Graphics:
         self.t_anim = 0
         self.i = 0
 
-<<<<<<< HEAD
         ani = anim.FuncAnimation(fig, animation, interval=100)
         plt.axis('scaled')  # ATTENTION CETTE LIGNE NE FONCTIONNE PAS SI ON UTILISE LA VERSION 3.1.0, 3.1.1, 3.1.2 de matplotlib, on espère qu'ils vont changer ca plus tard (en att on utilise 3.0.3)
         plt.show()
@@ -243,16 +231,6 @@ class Graphics:
         plt.show()
 
     def display_plane(self):  # la fonction doit etre lancée après display_animation pour l'instant
-=======
-        ani = anim.FuncAnimation(fig, self.animation, interval = 100)
-        #Writer = anim.writers['ffmpeg']
-        #writer = Writer(fps=15, metadata=dict(artist='Me'), bitrate=1800)
-        #ani.save('gif animation_1.mp4', writer=writer)
-        plt.axis('scaled')
-        plt.show()
-
-    def display_plane(self): #la fonction doit etre lancée après display_animation pour l'instant
->>>>>>> da7c13dae01ab690cee6eaf85d22b41e7136b2c6
         r_0 = [self.data_y[0][0], self.data_y[1][0], self.data_y[2][0]]
         v_0 = [self.data_y[3][0], self.data_y[4][0], self.data_y[5][0]]
         e_r = r_0 / np.linalg.norm(r_0)
@@ -303,4 +281,4 @@ class Graphics:
         plt.ylabel("Masse totale en (kg)")
         plt.legend()
         plt.grid()
-        plt.show()  
+        plt.show()
