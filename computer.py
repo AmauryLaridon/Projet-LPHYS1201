@@ -19,13 +19,14 @@ from parameters import *
 class Computer:
     def __init__(self):
         self.rocket                     = Rocket()
-        self.rocket.create_soyuz_mod()
+        self.rocket.create_soyuz()
         self.environment                = Environment()
         self.solution                   = []
         self.v_rad_reached              = 0
         self.do_the_g                   = True
         self.data_tg                    = [[], []]
         self.display_name               = []
+        self.orbital_txt                = " "
 
     def coord_to_rad(self, position):
         """Converti les coordonnées angulaires données en degré en radian"""
@@ -103,7 +104,7 @@ class Computer:
         thrust_direction = np.cross(orbital_direction, r_hat)
         return thrust_direction
 
-     def test2(self, h, r_hat):
+    def test2(self, h, r_hat):
         dir = math.cos(h/200000) * r_hat + math.sin(h/200000) * np.cross(self.orb_dir, r_hat) #22000 c sympa
         return dir
 
@@ -171,6 +172,7 @@ class Computer:
             if Pe_m >= self.environment.r_earth + 400000 - 500 and Pe_p >= self.environment.r_earth + 400000 - 500:
                 a_eng = 0
                 dM = 0
+                orbital_txt = "Vous êtes en orbite stable !"
         # if self.test:
         #    a_eng = 0
         if parameter["better friction"]:
@@ -261,11 +263,17 @@ class Computer:
                     for j in range(len(self.solution[i].t)):
                         writer.writerow([a[i].t[j], a[i].y[0][j], a[i].y[1][j], a[i].y[2][j], a[i].y[3][j], a[i].y[4][j], a[i].y[5][j], a[i].y[6][j]])
 
-    """    #Hauteur de la fusée
+        #Affichage de si nous sommes dans l'espace ou en train de nous crasher lamentablement
         for i in range(len(self.solution)):
             hauteur_fusee = np.sqrt(self.solution[i].y[0]**2 + self.solution[i].y[1]**2+self.solution[i].y[2]**2)-self.environment.r_earth
-        if hauteur_fusee == 0:
-            print("CRASH!")"""
+            if hauteur_fusee[i] >= 44300:
+                print("Bienvenue dans l'espace !")
+                break
+            if hauteur_fusee[i] <0:
+                print("CRASH!")
+                break
+
+
 
         #Affichage
         GUI = Graphics(self)
@@ -273,45 +281,8 @@ class Computer:
         GUI.display_2D_animation(GUI.animation_2D, self.data_t, self.data_y)
         GUI.display_plane()
         GUI.display_g()
-
-        for solution in self.solution:
-            plt.plot(solution.t, [math.sqrt(sum([solution.y[0][i]**2, solution.y[1][i]**2, solution.y[2][i]**2])) for i in range(len(solution.t))])
-        plt.show()
-
-
-    def display(self):
-
-        #Affichage des g au cours du vol
-        plt.plot(self.data_tg[0], self.data_tg[1])
-        plt.title("Nombre de g que subit Jebediah Kerman durant le vol.")
-        plt.xlabel("Temps(s)")
-        plt.ylabel("Nombre de g (m/s²)")
-        plt.grid()
-        plt.show()
-
-        #Affichage de la hauteur de l'orbite au cours du vol
-        for i in range(len(self.solution)):
-            plt.plot(self.solution[i].t, np.sqrt(self.solution[i].y[0]**2 + self.solution[i].y[1]**2+self.solution[i].y[2]**2)-self.environment.r_earth, label = self.display_name[i])
-        plt.axhline(y=44300, label='Atmosphère', c = 'c')
-        plt.title("Hauteur de l'orbite en fonction du temps.")
-        plt.xlabel("Temps(s)")
-        plt.ylabel("Hauteur de l'orbite (m)")
-        plt.legend()
-        plt.grid()
-        plt.show()
-
-        #Affichage de la masse de la fusée au cours du vol
-        for i in range(len(self.solution)):
-            plt.plot(self.solution[i].t, self.solution[i].y[6], label = self.display_name[i])
-        plt.title("Evolution de la masse totale de la fusée au cours du vol.")
-        plt.xlabel("Temps(s)")
-        plt.ylabel("Masse totale en (kg)")
-        plt.legend()
-        plt.grid()
-        plt.show()
-
-        #DEBUG ZONE -------------------------------------------------------------------------------------------------------------------------
-
+        GUI.display_h()
+        GUI.display_m()
 
 if __name__ == "__main__":
 

@@ -37,7 +37,7 @@ class Graphics:
         self.dt = 10
 
     def animation2(self, _):
-        self.dt = max([self.data_t[i + 1] - self.data_t[i] for i in range(len(self.data_t) - 1)]) * 2  # woooooooohoooooooow ca fonctionne michel
+        self.dt = max([self.data_t[i + 1] - self.data_t[i] for i in range(len(self.data_t) - 1)]) * 2
         t_max = self.data_t[-1]
 
         while t_max - 1 >= self.t_anim >= self.data_t[self.i]:
@@ -78,7 +78,7 @@ class Graphics:
         y_earth = self.environment.r_earth * np.sin(u + self.environment.freq_rot * 2 * math.pi * self.t_anim) * np.sin(v)
         z_earth = self.environment.r_earth * np.cos(v)
         #self.ax.plot_surface(x_earth, y_earth, z_earth, rstride=1, cstride=1, cmap='magma', alpha = 0.5)
-        self.ax.plot_wireframe(x_earth, y_earth, z_earth, color='b', alpha=0.5)
+        self.ax.plot_surface(x_earth, y_earth, z_earth, color='b', alpha=0.5)
 
         self.ax.set_xlim(-self.r_max * 1.1, self.r_max * 1.1)
         self.ax.set_ylim(-self.r_max * 1.1, self.r_max * 1.1)
@@ -261,3 +261,24 @@ class Graphics:
         plt.ylabel("Nombre de g (m/s²)")
         plt.grid()
         plt.show()
+
+    def display_h(self):
+        for i in range(len(self.computer.solution)):
+            plt.plot(self.computer.solution[i].t, np.sqrt(self.computer.solution[i].y[0]**2 + self.computer.solution[i].y[1]**2+self.computer.solution[i].y[2]**2)-self.environment.r_earth, label = self.computer.display_name[i])
+        plt.axhline(y=44300, label='Atmosphère', c = 'c')
+        plt.title("Hauteur de l'orbite en fonction du temps.")
+        plt.xlabel("Temps(s)")
+        plt.ylabel("Hauteur de l'orbite (m)")
+        plt.legend()
+        plt.grid()
+        plt.show()
+
+    def display_m(self):
+        for i in range(len(self.computer.solution)):
+            plt.plot(self.computer.solution[i].t, self.computer.solution[i].y[6], label = self.computer.display_name[i])
+        plt.title("Evolution de la masse totale de la fusée au cours du vol.")
+        plt.xlabel("Temps(s)")
+        plt.ylabel("Masse totale en (kg)")
+        plt.legend()
+        plt.grid()
+        plt.show()    
