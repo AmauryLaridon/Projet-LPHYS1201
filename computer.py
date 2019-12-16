@@ -27,6 +27,8 @@ class Computer:
         self.data_tg                    = [[], []]
         self.display_name               = []
         self.orbital_txt                = " "
+        self.space_reached              = False
+        self.crash                      = False
 
     def coord_to_rad(self, position):
         """Converti les coordonnées angulaires données en degré en radian"""
@@ -222,14 +224,19 @@ class Computer:
         self.orb_dir = self.orbital_direction(X, V)
 
         #Calcul radial launch pour les étages possédant du fuel
+
         for i in range(len(self.rocket.stage)-1):
+            #Initialistion masse et temps
             Y[6] = self.rocket.M
             t_0 += T
             T = self.rocket.stage_time()
+            #Calcul et résolution de l'équation différentielle
             self.solution.append(ode.solve_ivp(fun = self.radial_launch, t_span = (t_0,T+t_0), y0 = Y, vectorized = False, max_step = T/500))
+            #Découplage une fois le temps de l'étage courant atteint
             print("Découplage du "+self.rocket.stage[-1].name +" après :"+str(T+t_0)+"s")
             self.display_name.append(self.rocket.stage[-1].name)
             self.rocket.decouple()
+            #Enregistrement des solutions
             for j in range(7):
                 Y[j] = self.solution[i].y[j][-1]
             for j in range(len(self.solution[i].t)):
@@ -238,11 +245,14 @@ class Computer:
                     self.data_y[k].append(self.solution[i].y[k][j])
 
         #Calcul du restant de l'orbite une fois qu'il reste uniquement la payload
+        #Initialisation masse et temps
         Y[6] = self.rocket.M
         t_0 += T
         T = 10000
         self.display_name.append(self.rocket.stage[-1].name)
+        #Calcul et résolution de l'équation différentielle
         self.solution.append(ode.solve_ivp(fun = self.radial_launch, t_span = (t_0,T+t_0), y0 = Y, vectorized = False, max_step = T/1000))
+        #Enregistrement des solutions
         for j in range(7):
             Y[j] = self.solution[-1].y[j][-1]
         for j in range(len(self.solution[-1].t)):
@@ -250,6 +260,14 @@ class Computer:
                 for k in range(7):
                     self.data_y[k].append(self.solution[-1].y[k][j])
                     pass
+
+        #Calcul de la hauteur de la fusée
+        for i in range(len(self.solution)):
+            hauteur_fusee = np.sqrt(self.solution[i].y[0]**2 + self.solution[i].y[1]**2+self.solution[i].y[2]**2)-self.environment.r_earth
+            if hauteur_fusee[i] >= 44300:
+                self.space_reached = True
+            if hauteur_fusee[i] <= 0:
+                self.crash = True
 
         #Ecriture des donnée dans un fichier
         with open("flight_data.csv",'a') as file:
@@ -263,19 +281,11 @@ class Computer:
                     for j in range(len(self.solution[i].t)):
                         writer.writerow([a[i].t[j], a[i].y[0][j], a[i].y[1][j], a[i].y[2][j], a[i].y[3][j], a[i].y[4][j], a[i].y[5][j], a[i].y[6][j]])
 
-        #Affichage de si nous sommes dans l'espace ou en train de nous crasher lamentablement
-        for i in range(len(self.solution)):
-            hauteur_fusee = np.sqrt(self.solution[i].y[0]**2 + self.solution[i].y[1]**2+self.solution[i].y[2]**2)-self.environment.r_earth
-            if hauteur_fusee[i] >= 44300:
-                print("Bienvenue dans l'espace !")
-                break
-            if hauteur_fusee[i] <0:
-                print("CRASH!")
-                break
-
-
-
         #Affichage
+        if self.space_reached:
+            print("Bienvenue dans l'espace !")
+        if self.crash:
+            print("CRASH!!!")
         GUI = Graphics(self)
         GUI.display_3D_animation(GUI.animation2, self.data_t, self.data_y)
         GUI.display_2D_animation(GUI.animation_2D, self.data_t, self.data_y)
@@ -287,5 +297,4 @@ class Computer:
 if __name__ == "__main__":
 
     self = Computer()
-    #self.environment = Environment(M_earth = 5.2915e22, r_earth = 600000)      #ksp, bah putain c vraiment plus facile que la vrai vie...
     self.launch([5,-52])

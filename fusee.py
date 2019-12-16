@@ -115,15 +115,15 @@ class Rocket:
         self.update()
         print("La fusée est maintenant une fusée de type Falcon heavy")
 
-    def create_saturneV(self):
-        """Permet de créer directement une fusée de type Saturne V"""
+    def create_saturnV(self):
+        """Permet de créer directement une fusée de type Saturn V"""
         self.reset()
         self.add_stage('payload', "LEM + Module de service", 47000, 0, 0, 2.00, 0)
         self.add_stage('stage', 'Troisième étage', 11300, 95700, 1000000, 2.78, 203.18)
         self.add_stage('stage', 'Deuxième étage', 36500, 445000, 5000000, 3.42, 1234)
         self.add_stage('stage', 'Premier étage', 130400 ,2148600, 33400000, 4, 14324)
         self.update()
-        print("La fusée est maintenant une fusée de type SaturneV")
+        print("La fusée est maintenant une fusée de type SaturnV")
 
     #-------------------------------------FONCTIONS LIEES A LA FUSEE--------------------------------------------------#
 
