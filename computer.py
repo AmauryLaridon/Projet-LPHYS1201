@@ -223,9 +223,14 @@ class Computer:
 
         #Affichage
         GUI = Graphics(self)
-        GUI.display_animation(self.data_t, self.data_y)
+        GUI.display_3D_animation(GUI.animation2, self.data_t, self.data_y)
+        GUI.display_2D_animation(GUI.animation_2D, self.data_t, self.data_y)
         GUI.display_plane()
-        self.display()
+        GUI.display_g()
+
+        for solution in self.solution:
+            plt.plot(solution.t, [math.sqrt(sum([solution.y[0][i]**2, solution.y[1][i]**2, solution.y[2][i]**2])) for i in range(len(solution.t))])
+        plt.show()
 
 
     def display(self):
