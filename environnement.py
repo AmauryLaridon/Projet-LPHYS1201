@@ -1,5 +1,8 @@
 import math
-# -----------------------------------------CLASSE MODELISANT TOUT L ENVIRONNEMENT DE VOL------------------------------------------------ #
+
+from parameters import *
+
+# --------------------CLASSE MODELISANT TOUT L ENVIRONNEMENT DE VOL---------------- #
 class Environment:
     def __init__(self, G=6.6743e-11, M_earth=5.972e24, r_earth=6371000, gk=0.03417429, L_B=0.0065, T_0=288.15, rho_0=1.225, T_rot=86164):
         """Initialise l'environnement dans lequel la fusée va évoluer, par défaut les paramètres sont fixés sur ceux de la Terre"""
@@ -12,6 +15,10 @@ class Environment:
         self.rho_0 = rho_0
         self.T_rot = T_rot
         self.freq_rot = 1 / T_rot
+        if parameter["cool_ath_model"]:
+            self.h_athm = 85000
+        else:
+            self.h_athm = 44300
 
     def air_density(self, r):
         """Modèle simplifié de l'atlmosphère donné dans l'énoncé"""
@@ -25,7 +32,7 @@ class Environment:
         return rho
 
     def US_standart(self, r): # http://www.braeunig.us/space/atmmodel.htm#table4
-        #Autre modèle d'atmosphère légèrement plus rigoureux
+        """Autre modèle d'atmosphère TRES légèrement plus rigoureux"""
         R = 287.053
         h = (r - self.r_earth)/1000
         if h <= 11:
@@ -64,7 +71,6 @@ class Environment:
         return rho
 
     def Earth(self):
-        """Permet d'initialiser directement les données d'un environnement correspondant à la Terre"""
         self.G = 6.6743e-11
         self.M_earth = 5.972e24
         self.r_earth = 6371000
@@ -75,10 +81,9 @@ class Environment:
         self.T_rot = 86164
         self.freq_rot = 1 / self.T_rot
 
-        print("La Terre est désormais l'environnement utilisé.")
+        print("Earth is now the environment")
 
     def Kerbin(self):
-        """Permet d'initialiser directement les données d'un environnement correspondant à Kerbin"""
         self.G = 6.6743e-11
         self.M_earth = 5.2915e22
         self.r_earth = 600000
@@ -89,4 +94,4 @@ class Environment:
         self.T_rot = 21549
         self.freq_rot = 1 / self.T_rot
 
-        print("Kerbin est désormais l'environnement utilisé.")
+        print("Kerbin is now the environment")
