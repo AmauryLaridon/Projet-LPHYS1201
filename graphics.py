@@ -78,7 +78,7 @@ class Graphics:
         y_earth = self.environment.r_earth * np.sin(u + self.environment.freq_rot * 2 * math.pi * self.t_anim) * np.sin(v)
         z_earth = self.environment.r_earth * np.cos(v)
         #self.ax.plot_surface(x_earth, y_earth, z_earth, rstride=1, cstride=1, cmap='magma', alpha = 0.5)
-        self.ax.plot_surface(x_earth, y_earth, z_earth, color='b', alpha=0.5)
+        self.ax.plot_wireframe(x_earth, y_earth, z_earth, color='b', alpha=0.5)
 
         self.ax.set_xlim(-self.r_max * 1.1, self.r_max * 1.1)
         self.ax.set_ylim(-self.r_max * 1.1, self.r_max * 1.1)
@@ -203,8 +203,8 @@ class Graphics:
         self.i = 0
 
         ani = anim.FuncAnimation(fig, animation, interval=100)
-        #plt.axis('scaled')  # ATTENTION CETTE LIGNE NE FONCTIONNE PAS SI ON UTILISE LA VERSION 3.1.0, 3.1.1, 3.1.2 de matplotlib, on espère qu'ils vont changer ca plus tard (en att on utilise 3.0.3)
-        #plt.show()
+        plt.axis('scaled')  # ATTENTION CETTE LIGNE NE FONCTIONNE PAS SI ON UTILISE LA VERSION 3.1.0, 3.1.1, 3.1.2 de matplotlib, on espère qu'ils vont changer ca plus tard (en att on utilise 3.0.3)
+        plt.show()
 
     def display_2D_animation(self, animation, data_t, data_y):
         self.data_t = data_t
