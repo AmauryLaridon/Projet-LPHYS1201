@@ -204,7 +204,7 @@ class Graphics:
 
         ani = anim.FuncAnimation(fig, animation, interval=100)
         #plt.axis('scaled')  # ATTENTION CETTE LIGNE NE FONCTIONNE PAS SI ON UTILISE LA VERSION 3.1.0, 3.1.1, 3.1.2 de matplotlib, on espère qu'ils vont changer ca plus tard (en att on utilise 3.0.3)
-        plt.show()
+        #plt.show()
 
     def display_2D_animation(self, animation, data_t, data_y):
         self.data_t = data_t
