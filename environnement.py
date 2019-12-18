@@ -1,4 +1,5 @@
 import math
+from parameters import *
 # -----------------------------------------CLASSE MODELISANT TOUT L ENVIRONNEMENT DE VOL------------------------------------------------ #
 class Environment:
     def __init__(self, G=6.6743e-11, M_earth=5.972e24, r_earth=6371000, gk=0.03417429, L_B=0.0065, T_0=288.15, rho_0=1.225, T_rot=86164):
@@ -12,6 +13,10 @@ class Environment:
         self.rho_0 = rho_0
         self.T_rot = T_rot
         self.freq_rot = 1 / T_rot
+        if parameter["cool_ath_model"]:
+            self.h_athm = 85000
+        else:
+            self.h_athm = 44300
 
     def air_density(self, r):
         """Modèle simplifié de l'atlmosphère donné dans l'énoncé"""

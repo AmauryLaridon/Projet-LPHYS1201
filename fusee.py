@@ -40,7 +40,7 @@ class Rocket:
         if len(self.stage) == 0:
             if stage_type != 'payload':
                 print(txt_to_print + "\nBienvenue dans ce programme permettant de simuler la mise en orbite d'une fusée!\n" + txt_to_print)
-                print("La construction de la fusée doit commencer par de placement de la charge utile.")
+                print("La construction de la fusée doit commencer par le placement de la charge utile.")
             else:
                 print(txt_to_print + "\nBienvenue dans ce programme permettant de simuler la mise en orbite d'une fusée!\n" + txt_to_print)
                 new_stage = Stage(stage_type, stage_name, M_empty, M_fuel, P, C_A, C)
@@ -53,7 +53,7 @@ class Rocket:
             print("Alors, c'est pas que ça sert à rien de rajouter un payload sous un moteur, mais on va pas se mentir il va cramer ton satellite.")
 
         elif self.stage[-1].type == 'booster' and stage_type == 'booster':
-            print("Euuuuu Michel va falloir se calmer ça fait vraiment beaucoup de booster la...")
+            print("Euuuuu Michel va falloir se calmer ça fait vraiment beaucoup de booster la... Si tu désires mettre plusieurs boosters construisant un seul comme le produit des données d'un unique.")
 
         else:
             new_stage = Stage(stage_type, stage_name, M_empty, M_fuel, P, C_A, C)
