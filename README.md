@@ -31,7 +31,7 @@ Tout d'abord, un bref aperçu sur la structure des fichiers. Ils sont aux nombre
                        surcharger le temps de calcul et d'écriture.
    - User.py          : Seul fichier pour lequel vous devez vous soucier. Si vous souhaitez lancer une autre fusée vous devez
                        simplement changer dans l'instance de rocket l'appel de la fonction de construction de la fusée souhaitée.
-                       De plus si vous désirez changer la zone de lancement vous devez simplement donner les coordonnées géographiques de votre jardin si tel est votre désir, suivant la convention latitude/longitude en degré, coordonnées à remplacer dans l'argument de pc.launch([latitude, longitude])
+                       De plus si vous désirez changer la zone de lancement vous devez simplement donner les coordonnées géographiques de votre jardin si tel est votre désir (suivant la convention latitude/longitude en degré) vous devez simplement remplacer les coordonnées dans l'argument de pc.launch([latitude, longitude])
                        
 Quelques règles (qui défient la logique)) à respecter si vous construiser votre fusée avec la fonction add_stage :
 
