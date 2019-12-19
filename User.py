@@ -9,7 +9,7 @@ rocket = Rocket()
 rocket.create_soyuz_mod()
 
 pc = Computer(rocket)
-pc.launch([45, 0])
+pc.launch([0, 0])
 
 GUI = Graphics(pc)
 GUI.display_3D_animation(GUI.animation2)

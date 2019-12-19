@@ -23,8 +23,8 @@ class Graphics:
         self.computer = computer
         self.environment = computer.environment
         self.rocket = computer.rocket
-        len(self.data_t)
-        self.r_max = 0
+        self.length = len(self.data_t)
+        self.r_max = math.sqrt(max([self.data_y[0][i] ** 2 + self.data_y[1][i] ** 2 + self.data_y[2][i] ** 2 for i in range(self.length)]))
         self.t_anim = 0
         self.i = 0
         self.ax = 0
@@ -46,7 +46,7 @@ class Graphics:
         self.environment = self.computer.environment
         self.rocket = self.computer.rocket
         self.length = len(self.data_t)
-        self.r_max = 0
+        self.r_max = math.sqrt(max([self.data_y[0][i] ** 2 + self.data_y[1][i] ** 2 + self.data_y[2][i] ** 2 for i in range(self.length)]))
         self.t_anim = 0
         self.i = 0
         self.ax = 0
@@ -208,14 +208,6 @@ class Graphics:
 
     def display_3D_animation(self, animation):
         self.update_graphics()
-        self.length = len(self.data_t)
-        r_2 = [self.data_y[0][i] ** 2 + self.data_y[1][i] ** 2 + self.data_y[2][i] ** 2 for i in range(self.length)]
-        self.r_max = math.sqrt(max(r_2))
-
-        self.X = [[] for i in range(self.n)]
-        self.Y = [[] for i in range(self.n)]
-        self.Z = [[] for i in range(self.n)]
-        self.T = [[] for i in range(self.n)]
 
         fig = plt.figure()
         self.ax = fig.add_subplot(111, projection='3d')
@@ -229,14 +221,6 @@ class Graphics:
 
     def display_2D_animation(self, animation):
         self.update_graphics()
-        self.length = len(self.data_t)
-        r_2 = [self.data_y[0][i] ** 2 + self.data_y[1][i] ** 2 + self.data_y[2][i] ** 2 for i in range(self.length)]
-        self.r_max = math.sqrt(max(r_2))
-
-        self.X = [[] for i in range(self.n)]
-        self.Y = [[] for i in range(self.n)]
-        self.Z = [[] for i in range(self.n)]
-        self.T = [[] for i in range(self.n)]
 
         fig = plt.figure()
         self.ax = fig.add_subplot(111)

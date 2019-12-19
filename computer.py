@@ -1,5 +1,5 @@
 import math
-import scipy.integrate as ode
+import scipy.integrate as sc
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as anim
@@ -26,6 +26,12 @@ class Computer:
         self.environment = Environment()
         self.solution = []
         self.data_tg = [[], []]
+        self.t_stop = 0
+        self.theta_0 = []
+        self.data_t = []
+        self.data_y = [[], [], [], [], [], [], []]
+        self.orb_dir = []
+        self.separation_time = [0]
 
         self.orbit_h_wanted = 400000
 
@@ -117,7 +123,7 @@ class Computer:
         dir = math.cos(h / 200000) * r_hat + math.sin(h / 200000) * np.cross(self.orb_dir, r_hat)  # 22000 c sympa
         return dir
 
-    def radial_launch(self, t, X):
+    def test_launch(self, t, X):
         """fonction a implementer dans RK-45 pour un lancement purement radiale, ou plus mtn enfait"""
         # Variables de positions et de vitesse.
         x, y, z, v_x, v_y, v_z, M = X
@@ -149,13 +155,14 @@ class Computer:
 
         # calul l'apoapsis Ap et le périapsis Pe
         delta = (self.environment.G ** 2) * (self.environment.M_earth ** 2) + r ** 2 * (np.linalg.norm(np.cross(V, r_hat)) ** 2) * (np.linalg.norm(V) ** 2 - 2 * self.environment.G * self.environment.M_earth / r)
+
         if delta > 0:
-            Pe_p = (-self.environment.G * self.environment.M_earth + math.sqrt(delta)) / (np.linalg.norm(V) ** 2 - 2 * self.environment.G * self.environment.M_earth / r)
-            Pe_m = (-self.environment.G * self.environment.M_earth - math.sqrt(delta)) / (np.linalg.norm(V) ** 2 - 2 * self.environment.G * self.environment.M_earth / r)
-            # print(Pe_p, " ............... ", Pe_m)
+            self.Pe = (-self.environment.G * self.environment.M_earth + math.sqrt(delta)) / (np.linalg.norm(V) ** 2 - 2 * self.environment.G * self.environment.M_earth / r)
+            self.Ap = (-self.environment.G * self.environment.M_earth - math.sqrt(delta)) / (np.linalg.norm(V) ** 2 - 2 * self.environment.G * self.environment.M_earth / r)
+            # print(self.Pe, " ............... ", self.Ap)
         else:
-            Pe_p = 0
-            Pe_m = 0
+            self.Pe = 0
+            self.Ap = 0
             print("FUCK")
 
         if r < self.environment.r_earth - 100 and not self.crashed:  # les 100 c'est juste par sécurité
@@ -183,9 +190,185 @@ class Computer:
 
         # vérifie si on est en orbite
         if delta > 0:
-            if Pe_m >= self.environment.r_earth + self.orbit_h_wanted - 500 and Pe_p >= self.environment.r_earth + self.orbit_h_wanted - 500:
+            if self.Pe >= self.environment.r_earth + self.orbit_h_wanted - 500:
                 a_eng = 0
                 dM = 0
+                if self.t_stop == 0:
+                    self.t_stop = t
+
+        if parameter["better friction"]:
+            """
+            cos = abs(np.dot(eng_dir, V_rel/np.linalg.norm(V_rel)))
+            sin = math.sqrt(1 - cos**2)
+            S = 0
+            for i in range(len(self.rocket.stage)):
+                s = math.pi * self.rocket.stage[i].r**2 * cos + self.rocket.stage[i].r * self.rocket.stage[i].L * sin
+                if i > 1:
+                    s_ = sum([self.rocket.stage[j].L * self.rocket.stage[j].L * sin for j in range(i)])
+                else:
+                    s_ = 0
+                if s_ >
+                S +=
+            C_A = 0
+            """
+            pass
+        else:
+            C_A = self.rocket.C_A
+
+        a_x, a_y, a_z = a_grav * r_hat - rho * v_rel * C_A * V_rel / (2 * M) + a_eng * eng_dir
+
+        a_g = np.array([a_x, a_y, a_z]) - a_grav * r_hat
+        g = np.linalg.norm(a_g) / 9.81
+        self.data_tg[0].append(t)
+        self.data_tg[1].append(g)
+
+        return np.array([v_x, v_y, v_z, a_x, a_y, a_z, dM])
+
+    def free_fall(self, t, X):
+        """fonction a implementer dans RK-45 pour un lancement purement radiale, ou plus mtn enfait"""
+        # Variables de positions et de vitesse.
+        x, y, z, v_x, v_y, v_z, M = X
+
+        # coordonnées sphériques
+        r, theta, phi = self.convert_CS([x, y, z])
+
+        # vecteur position normé
+        r_hat = np.array([x, y, z]) / r
+        V = np.array([v_x, v_y, v_z])
+
+        # calcul de la vitesse radiale
+        v_rad = self.radial_velocity(r_hat, V)
+        v_pot = math.sqrt(2 * self.environment.G * self.environment.M_earth * abs(1 / (self.environment.r_earth + self.orbit_h_wanted) - 1 / r))
+        # Vitesse nécessaire pour avoir l'energie potentielle définie par la hauteur de l'orbite voulue
+        if v_rad >= v_pot:
+            self.v_rad_reached = True
+        # Défini le vent
+        V_wind = self.wind_velocity([r, theta, phi])
+        # Défini les vitesses relatives dues au "vent"
+        V_rel = V - V_wind
+        v_rel = np.linalg.norm(V_rel)
+
+        # Défini la densité de l'air
+        if parameter['cool_ath_model']:
+            rho = self.environment.US_standart(r)
+        else:
+            rho = self.environment.air_density(r)
+
+        # calul l'apoapsis Ap et le périapsis Pe
+        delta = (self.environment.G ** 2) * (self.environment.M_earth ** 2) + r ** 2 * (np.linalg.norm(np.cross(V, r_hat)) ** 2) * (np.linalg.norm(V) ** 2 - 2 * self.environment.G * self.environment.M_earth / r)
+
+        if delta > 0:
+            self.Pe = (-self.environment.G * self.environment.M_earth + math.sqrt(delta)) / (np.linalg.norm(V) ** 2 - 2 * self.environment.G * self.environment.M_earth / r)
+            self.Ap = (-self.environment.G * self.environment.M_earth - math.sqrt(delta)) / (np.linalg.norm(V) ** 2 - 2 * self.environment.G * self.environment.M_earth / r)
+            # print(self.Pe, " ............... ", self.Ap)
+        else:
+            self.Pe = 0
+            self.Ap = 0
+            print("FUCK")
+
+        if r < self.environment.r_earth - 100 and not self.crashed:  # les 100 c'est juste par sécurité
+            self.crashed = True
+        if r >= self.environment.r_earth + self.environment.h_athm and not self.space_reached:
+            self.space_reached = True
+
+        # Variation de masse
+        dM = 0
+
+        # calcul de l'accélération
+        a_grav = - (self.environment.G * self.environment.M_earth) / (r ** 2)
+
+        if parameter["better friction"]:
+            """
+            cos = abs(np.dot(eng_dir, V_rel/np.linalg.norm(V_rel)))
+            sin = math.sqrt(1 - cos**2)
+            S = 0
+            for i in range(len(self.rocket.stage)):
+                s = math.pi * self.rocket.stage[i].r**2 * cos + self.rocket.stage[i].r * self.rocket.stage[i].L * sin
+                if i > 1:
+                    s_ = sum([self.rocket.stage[j].L * self.rocket.stage[j].L * sin for j in range(i)])
+                else:
+                    s_ = 0
+                if s_ >
+                S +=
+            C_A = 0
+            """
+            pass
+        else:
+            C_A = self.rocket.C_A
+
+        a_x, a_y, a_z = a_grav * r_hat - rho * v_rel * C_A * V_rel / (2 * M)
+
+        a_g = np.array([a_x, a_y, a_z]) - a_grav * r_hat
+        g = np.linalg.norm(a_g) / 9.81
+        self.data_tg[0].append(t)
+        self.data_tg[1].append(g)
+
+        return np.array([v_x, v_y, v_z, a_x, a_y, a_z, dM])
+
+    def circularisation(self, t, X):
+        """fonction a implementer dans RK-45 pour un lancement purement radiale, ou plus mtn enfait"""
+        # Variables de positions et de vitesse.
+        x, y, z, v_x, v_y, v_z, M = X
+
+        # coordonnées sphériques
+        r, theta, phi = self.convert_CS([x, y, z])
+
+        # vecteur position normé
+        r_hat = np.array([x, y, z]) / r
+        V = np.array([v_x, v_y, v_z])
+
+        # calcul de la vitesse radiale
+        v_rad = self.radial_velocity(r_hat, V)
+        v_pot = math.sqrt(2 * self.environment.G * self.environment.M_earth * abs(1 / (self.environment.r_earth + self.orbit_h_wanted) - 1 / r))
+        # Vitesse nécessaire pour avoir l'energie potentielle définie par la hauteur de l'orbite voulue
+        if v_rad >= v_pot:
+            self.v_rad_reached = True
+        # Défini le vent
+        V_wind = self.wind_velocity([r, theta, phi])
+        # Défini les vitesses relatives dues au "vent"
+        V_rel = V - V_wind
+        v_rel = np.linalg.norm(V_rel)
+
+        # Défini la densité de l'air
+        if parameter['cool_ath_model']:
+            rho = self.environment.US_standart(r)
+        else:
+            rho = self.environment.air_density(r)
+
+        # calul l'apoapsis Ap et le périapsis Pe
+        delta = (self.environment.G ** 2) * (self.environment.M_earth ** 2) + r ** 2 * (np.linalg.norm(np.cross(V, r_hat)) ** 2) * (np.linalg.norm(V) ** 2 - 2 * self.environment.G * self.environment.M_earth / r)
+
+        if delta > 0:
+            self.Pe = (-self.environment.G * self.environment.M_earth + math.sqrt(delta)) / (np.linalg.norm(V) ** 2 - 2 * self.environment.G * self.environment.M_earth / r)
+            self.Ap = (-self.environment.G * self.environment.M_earth - math.sqrt(delta)) / (np.linalg.norm(V) ** 2 - 2 * self.environment.G * self.environment.M_earth / r)
+            # print(self.Pe, " ............... ", self.Ap)
+        else:
+            self.Pe = 0
+            self.Ap = 0
+            print("FUCK")
+
+        if r < self.environment.r_earth - 100 and not self.crashed:  # les 100 c'est juste par sécurité
+            self.crashed = True
+        if r >= self.environment.r_earth + self.environment.h_athm and not self.space_reached:
+            self.space_reached = True
+
+        # Variation de masse
+
+
+        # calcul de l'accélération
+        a_grav = - (self.environment.G * self.environment.M_earth) / (r ** 2)
+
+        # vérifie si on est en orbite
+        if delta > 0:
+            if self.Ap - self.Pe < 500:
+                a_eng = 0
+                dM = 0
+                eng_dir = - V / np.linalg.norm(V)
+            else:
+                a_eng = self.rocket.P / M
+                dM = -self.rocket.C - self.rocket.C_boost
+                eng_dir = - V / np.linalg.norm(V)
+        print(self.Ap - self.Pe)
 
         if parameter["better friction"]:
             """
@@ -216,7 +399,11 @@ class Computer:
         return np.array([v_x, v_y, v_z, a_x, a_y, a_z, dM])
 
     def launch(self, position):
-        """Réalise les calculs grâce à RK45 et le lancement de la fusée"""
+        """Fonction qui prend en charge tout les calculs lors du lancement de la fusée
+
+        :param position: liste de dimension 2 [a, b] dont les composantes sont respectivement la latitude et la longitude
+        :return: que dalle mais les données du vol sont stockées dans self.data_t et self.data_y
+        """
         print(txt_to_print + "\n/!\ DECOLAGE\n" + txt_to_print + "\n")
         # Conditions initiales
         angles = self.coord_to_rad(position)
@@ -227,10 +414,7 @@ class Computer:
         T = 0
         t_0 = 0
         self.theta_0 = angles[0]
-        self.data_t = []
-        self.data_y = [[], [], [], [], [], [], []]
         self.orb_dir = self.orbital_direction(X, V)
-        self.separation_time = [0]
 
         # Calcul radial launch
         for i in range(len(self.rocket.stage) - 1):
@@ -239,13 +423,55 @@ class Computer:
             t_0 += T
             T = self.rocket.stage_time()
             # Calcul et résolution de l'équation différentielle
-            self.solution.append(ode.solve_ivp(self.radial_launch, (t_0, T + t_0), Y, vectorized=False, max_step=T / 500))
-            # Découplage une fois le temps de l'étage courant atteint
-            print("Découplage du " + self.rocket.stage[-1].name + " après :" + str(T + t_0) + "s")
-            self.rocket.decouple()
-            for j in range(7):
-                Y[j] = self.solution[i].y[j][-1]
-            self.separation_time.append(t_0 + T)
+            self.solution.append(sc.solve_ivp(self.test_launch, (t_0, T + t_0), Y, vectorized=False, max_step=T / 500))
+            # vérifie si il faut découpler ou pas (et découple si il faut)
+            print(len(self.rocket.stage))
+            if self.t_stop == 0:
+                # Découplage une fois le temps de l'étage courant atteint
+                print("Découplage du " + self.rocket.stage[-1].name + " après :" + str(T + t_0) + "s")
+                self.rocket.decouple()
+                for j in range(7):
+                    Y[j] = self.solution[i].y[j][-1]
+                self.separation_time.append(t_0 + T)
+            else:
+                print("Arret du moteur après " + str(self.t_stop) + "s")
+                self.rocket.remove_fuel(self.t_stop - t_0)
+                while self.solution[-1].t[-2] >= self.t_stop:
+                    self.solution[-1].t = np.delete(self.solution[-1].t, -1)
+                    self.solution[-1].y = np.delete(self.solution[-1].y, -1, axis=1)
+                    print(self.t_stop)
+                    print(self.solution[-1].t[-1])
+                for j in range(7):
+                    Y[j] = self.solution[i].y[j][-1]
+                a = (self.Pe + self.Ap) / 2
+                t_0 = self.solution[-1].t[-1]
+                T = 1.1 * 2 * math.pi * math.sqrt((a ** 3) / (self.environment.G * self.environment.M_earth))
+                self.solution.append(sc.solve_ivp(self.free_fall, (t_0, T + t_0), Y, vectorized=False, max_step=T / 1000))
+                dist = self.Pe
+                for j in range(len(self.solution[-1].t)):
+                    if abs(math.sqrt(sum([self.solution[-1].y[0][j]**2 + self.solution[-1].y[1][j]**2 + self.solution[-1].y[2][j]**2])) - self.Pe) <= dist:
+                        r = math.sqrt(sum([self.solution[-1].y[0][j] ** 2 + self.solution[-1].y[1][j] ** 2 + self.solution[-1].y[2][j] ** 2]))
+                        dist = abs(r - self.Pe)
+                        t_Pe = self.solution[-1].t[j]
+                        v_Pe = math.sqrt(sum([self.solution[-1].y[3][j]**2 + self.solution[-1].y[4][j]**2 + self.solution[-1].y[5][j]**2]))
+                v_Pe_circular = math.sqrt(self.environment.G * self.environment.M_earth/r)
+                delta_v = abs(v_Pe_circular - v_Pe)
+                delta_t = (1 - math.e ** (-delta_v * self.rocket.C / self.rocket.stage[-1].P)) * self.solution[-1].y[6][-1] / self.rocket.C
+                print(delta_v, delta_t)
+                t_0 = t_Pe - delta_t / 2
+                T = delta_t * 1.2
+                while self.solution[-1].t[-2] >= t_0:
+                    self.solution[-1].t = np.delete(self.solution[-1].t, -1)
+                    self.solution[-1].y = np.delete(self.solution[-1].y, -1, axis=1)
+                for j in range(7):
+                    Y[j] = self.solution[-1].y[j][-1]
+                self.solution.append(sc.solve_ivp(self.circularisation, (t_0, t_0 + T), Y, vectorized=False, max_step=T / 100))
+                print("circularisation")
+                print("Découplage du " + self.rocket.stage[-1].name + " après :" + str(T + t_0) + "s")
+                self.rocket.decouple()
+                for j in range(7):
+                    Y[j] = self.solution[-1].y[j][-1]
+                self.separation_time.append(t_0 + T)
 
         # Calcul du restant de l'orbite une fois qu'il reste uniquement la payload
         # Initialisation masse et temps
@@ -254,7 +480,7 @@ class Computer:
         # T = 6000
         T = 8500
         # Calcul et résolution de l'équation différentielle
-        self.solution.append(ode.solve_ivp(self.radial_launch, (t_0, T + t_0), Y, vectorized=False, max_step=T / 1000))
+        self.solution.append(sc.solve_ivp(self.test_launch, (t_0, T + t_0), Y, vectorized=False, max_step=T / 1000))
         for j in range(7):
             Y[j] = self.solution[-1].y[j][-1]
         self.separation_time.append(t_0 + T)

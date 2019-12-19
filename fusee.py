@@ -125,7 +125,7 @@ class Rocket:
         self.update()
         print("La fusée est maintenant une fusée de type SaturnV")
 
-    #-------------------------------------FONCTIONS LIEES A LA FUSEE--------------------------------------------------#
+    # -------------------------------------FONCTIONS LIEES A LA FUSEE-------------------------------------------------- #
 
 
     def reset(self):
@@ -197,4 +197,12 @@ class Rocket:
             self.stage[-2].M_fuel -= self.stage[-2].C * T
             self.M -= self.stage[-2].C * T
         self.stage.pop()
+        self.update()
+
+    def remove_fuel(self, dt):
+        if self.stage[-1].type == 'booster':
+            self.stage[-2].M_fuel -= self.stage[-2].C * dt
+            self.M -= self.stage[-2].C * dt
+        self.stage[-1].M_fuel -= self.stage[-1].C * dt
+        self.M -= self.stage[-1].C * dt
         self.update()
