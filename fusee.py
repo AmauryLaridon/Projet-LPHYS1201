@@ -189,7 +189,7 @@ class Rocket:
         return t_stage
 
     def decouple(self):
-        """détache le dernier étage"""
+        """Détache le dernier étage"""
         print(txt_to_print + "\n/!\ SEPARATION\n" + txt_to_print)
         self.M -= self.stage[-1].M_empty + self.stage[-1].M_fuel
         if self.stage[-1].type == 'booster':
@@ -200,6 +200,7 @@ class Rocket:
         self.update()
 
     def remove_fuel(self, dt):
+        """Permet de calculer le fuel consommé durant un certain lapse de temps."""
         if self.stage[-1].type == 'booster':
             self.stage[-2].M_fuel -= self.stage[-2].C * dt
             self.M -= self.stage[-2].C * dt

@@ -12,7 +12,6 @@ from matplotlib import cm
 from fusee import *
 from environnement import *
 from graphics import *
-from parameters import *
 
 
 # -----------------------------CLASSE QUI PERMET D EFFECTUER TOUS LES CALCULS ET DE LES AFFICHER--------------------------#
@@ -123,6 +122,8 @@ class Computer:
         dir = math.cos(h / 200000) * r_hat + math.sin(h / 200000) * np.cross(self.orb_dir, r_hat)  # 22000 c sympa
         return dir
 
+    # ------------------------ Fonctions implémentées pour l'équation différentielle ---------------------- #
+
     def test_launch(self, t, X):
         """fonction a implementer dans RK-45 pour un lancement purement radiale, ou plus mtn enfait"""
         # Variables de positions et de vitesse.
@@ -148,7 +149,7 @@ class Computer:
         v_rel = np.linalg.norm(V_rel)
 
         # Défini la densité de l'air
-        if parameter['cool_ath_model']:
+        if not self.environment.cool_athm:
             rho = self.environment.US_standart(r)
         else:
             rho = self.environment.air_density(r)
@@ -196,24 +197,7 @@ class Computer:
                 if self.t_stop == 0:
                     self.t_stop = t
 
-        if parameter["better friction"]:
-            """
-            cos = abs(np.dot(eng_dir, V_rel/np.linalg.norm(V_rel)))
-            sin = math.sqrt(1 - cos**2)
-            S = 0
-            for i in range(len(self.rocket.stage)):
-                s = math.pi * self.rocket.stage[i].r**2 * cos + self.rocket.stage[i].r * self.rocket.stage[i].L * sin
-                if i > 1:
-                    s_ = sum([self.rocket.stage[j].L * self.rocket.stage[j].L * sin for j in range(i)])
-                else:
-                    s_ = 0
-                if s_ >
-                S +=
-            C_A = 0
-            """
-            pass
-        else:
-            C_A = self.rocket.C_A
+        C_A = self.rocket.C_A
 
         a_x, a_y, a_z = a_grav * r_hat - rho * v_rel * C_A * V_rel / (2 * M) + a_eng * eng_dir
 
@@ -249,7 +233,7 @@ class Computer:
         v_rel = np.linalg.norm(V_rel)
 
         # Défini la densité de l'air
-        if parameter['cool_ath_model']:
+        if not self.environment.cool_athm:
             rho = self.environment.US_standart(r)
         else:
             rho = self.environment.air_density(r)
@@ -277,24 +261,7 @@ class Computer:
         # calcul de l'accélération
         a_grav = - (self.environment.G * self.environment.M_earth) / (r ** 2)
 
-        if parameter["better friction"]:
-            """
-            cos = abs(np.dot(eng_dir, V_rel/np.linalg.norm(V_rel)))
-            sin = math.sqrt(1 - cos**2)
-            S = 0
-            for i in range(len(self.rocket.stage)):
-                s = math.pi * self.rocket.stage[i].r**2 * cos + self.rocket.stage[i].r * self.rocket.stage[i].L * sin
-                if i > 1:
-                    s_ = sum([self.rocket.stage[j].L * self.rocket.stage[j].L * sin for j in range(i)])
-                else:
-                    s_ = 0
-                if s_ >
-                S +=
-            C_A = 0
-            """
-            pass
-        else:
-            C_A = self.rocket.C_A
+        C_A = self.rocket.C_A
 
         a_x, a_y, a_z = a_grav * r_hat - rho * v_rel * C_A * V_rel / (2 * M)
 
@@ -330,7 +297,7 @@ class Computer:
         v_rel = np.linalg.norm(V_rel)
 
         # Défini la densité de l'air
-        if parameter['cool_ath_model']:
+        if not self.environment.cool_athm:
             rho = self.environment.US_standart(r)
         else:
             rho = self.environment.air_density(r)
@@ -352,9 +319,6 @@ class Computer:
         if r >= self.environment.r_earth + self.environment.h_athm and not self.space_reached:
             self.space_reached = True
 
-        # Variation de masse
-
-
         # calcul de l'accélération
         a_grav = - (self.environment.G * self.environment.M_earth) / (r ** 2)
 
@@ -368,26 +332,8 @@ class Computer:
                 a_eng = self.rocket.P / M
                 dM = -self.rocket.C - self.rocket.C_boost
                 eng_dir = - V / np.linalg.norm(V)
-        print(self.Ap - self.Pe)
 
-        if parameter["better friction"]:
-            """
-            cos = abs(np.dot(eng_dir, V_rel/np.linalg.norm(V_rel)))
-            sin = math.sqrt(1 - cos**2)
-            S = 0
-            for i in range(len(self.rocket.stage)):
-                s = math.pi * self.rocket.stage[i].r**2 * cos + self.rocket.stage[i].r * self.rocket.stage[i].L * sin
-                if i > 1:
-                    s_ = sum([self.rocket.stage[j].L * self.rocket.stage[j].L * sin for j in range(i)])
-                else:
-                    s_ = 0
-                if s_ >
-                S +=
-            C_A = 0
-            """
-            pass
-        else:
-            C_A = self.rocket.C_A
+        C_A = self.rocket.C_A
 
         a_x, a_y, a_z = a_grav * r_hat - rho * v_rel * C_A * V_rel / (2 * M) + a_eng * eng_dir
 
@@ -397,6 +343,8 @@ class Computer:
         self.data_tg[1].append(g)
 
         return np.array([v_x, v_y, v_z, a_x, a_y, a_z, dM])
+
+    # ---------------------- Fonction à utiliser pour tout le lancement ------------------- #
 
     def launch(self, position):
         """Fonction qui prend en charge tout les calculs lors du lancement de la fusée
@@ -424,7 +372,6 @@ class Computer:
             # Calcul et résolution de l'équation différentielle
             self.solution.append(sc.solve_ivp(self.test_launch, (t_0, T + t_0), Y, vectorized=False, max_step=T / 500))
             # vérifie si il faut découpler ou pas (et découple si il faut)
-            print(len(self.rocket.stage))
             if self.t_stop == 0:
                 # Découplage une fois le temps de l'étage courant atteint
                 print("Découplage du " + self.rocket.stage[-1].name + " après :" + str(T + t_0) + "s")
@@ -438,8 +385,6 @@ class Computer:
                 while self.solution[-1].t[-2] >= self.t_stop:
                     self.solution[-1].t = np.delete(self.solution[-1].t, -1)
                     self.solution[-1].y = np.delete(self.solution[-1].y, -1, axis=1)
-                    print(self.t_stop)
-                    print(self.solution[-1].t[-1])
                 for j in range(7):
                     Y[j] = self.solution[i].y[j][-1]
                 a = (self.Pe + self.Ap) / 2
@@ -456,7 +401,6 @@ class Computer:
                 v_Pe_circular = math.sqrt(self.environment.G * self.environment.M_earth/r)
                 delta_v = abs(v_Pe_circular - v_Pe)
                 delta_t = (1 - math.e ** (-delta_v * self.rocket.C / self.rocket.stage[-1].P)) * self.solution[-1].y[6][-1] / self.rocket.C
-                print(delta_v, delta_t)
                 t_0 = t_Pe - delta_t / 2
                 T = delta_t * 1.2
                 while self.solution[-1].t[-2] >= t_0:
@@ -465,7 +409,7 @@ class Computer:
                 for j in range(7):
                     Y[j] = self.solution[-1].y[j][-1]
                 self.solution.append(sc.solve_ivp(self.circularisation, (t_0, t_0 + T), Y, vectorized=False, max_step=T / 100))
-                print("circularisation")
+                print("Phase de circularisation!")
                 print("Découplage du " + self.rocket.stage[-1].name + " après :" + str(T + t_0) + "s")
                 self.rocket.decouple()
                 for j in range(7):
