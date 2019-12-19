@@ -8,7 +8,7 @@ de ses rêves sur la planète de ses désirs bien que la Terre et la fusée Soyu
 Parce que lancer une fusée ne se fait pas en appuyant simplement sur une pédale et en tournant un volant, il est important
 de lire ce texte afin de bien respecter les procédures et consignes inhérentes à notre programme.
 
-Tout d'abord, un bref apercu sur la structure des fichiers. Ils sont aux nombres de cinq :
+Tout d'abord, un bref aperçu sur la structure des fichiers. Ils sont aux nombres de cinq :
   
   - environnement.py : Contient la classe définissant l'environnement de vol utilisé. Vous pouvez allègrement modifier les
                        paramètres de la planète si vous le désirez mais attention, la mise en orbite fonctionne pour les 
