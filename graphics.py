@@ -59,6 +59,8 @@ class Graphics:
         self.dt = 10
 
     def animation2(self, _):
+        """Animation en 3D pour une visualisation plutot sympathique (et bien chiant à implémenter) de la fusée
+        fonction de type animation"""
         self.dt = max([self.data_t[i + 1] - self.data_t[i] for i in range(len(self.data_t) - 1)]) * 2  # woooooooohoooooooow ca fonctionne michel
         t_max = self.data_t[-1]
 
@@ -114,6 +116,8 @@ class Graphics:
         self.ax.plot(self.X[-1], self.Y[-1], self.Z[-1], color='r', alpha=1/self.n)
 
     def animation(self, _):
+        """Animation en 3D pour une construction progressive de la trajectoire
+        fonction de type animation"""
         t_max = self.data_t[-1]
         while t_max - 1 >= self.t_anim >= self.data_t[self.i]:
             self.x.append(self.data_y[0][self.i])
@@ -139,6 +143,8 @@ class Graphics:
         self.ax.plot(self.x, self.y, self.z, color='r')
 
     def animation_2D(self, _):
+        """Animation en 2D pour une construction progressive de la trajectoire sur le plan orbital
+        fonction de type animation"""
         self.dt = max([self.data_t[i + 1] - self.data_t[i] for i in range(len(self.data_t) - 1)]) * 2  # woooooooohoooooooow ca fonctionne michel
         t_max = self.data_t[-1]
 
@@ -207,6 +213,8 @@ class Graphics:
             # plt.ylim(-self.r_max * 1.1, self.r_max * 1.1)
 
     def display_3D_animation(self, animation):
+        """fonction qui appel en boucle une des fonction "animation" pour, bah les animer (version 3D)
+        param: --- animation: fonction de type animation définie plus haut"""
         self.update_graphics()
 
         fig = plt.figure()
@@ -220,6 +228,8 @@ class Graphics:
         plt.show()
 
     def display_2D_animation(self, animation):
+        """fonction qui appel en boucle une des fonction "animation" pour, bah les animer (version 2D)
+        param: --- animation: fonction de type animation définie plus haut"""
         self.update_graphics()
 
         fig = plt.figure()
@@ -235,6 +245,7 @@ class Graphics:
         plt.show()
 
     def display_plane(self, show=True):
+        """affiche un graphique statique de la trajectoire de la fusée dans le plan orbital"""
         self.update_graphics()
         r_0 = [self.data_y[0][0], self.data_y[1][0], self.data_y[2][0]]
         v_0 = [self.data_y[3][0], self.data_y[4][0], self.data_y[5][0]]
@@ -261,6 +272,7 @@ class Graphics:
             plt.show()
 
     def display_g(self, separate=False, useless=True, show=True):
+        """affiche les g que se prennent les astronautes lors du décolage"""
         self.update_graphics()
         if not separate:
             plt.plot(self.computer.data_tg[0], self.computer.data_tg[1])
@@ -285,6 +297,7 @@ class Graphics:
             plt.show()
 
     def display_h(self, separate=False, show=True):
+        """affiche la distance de la fusée par rapport au centre de la Terre en fonction du temps"""
         self.update_graphics()
         if not separate:
             plt.plot(self.data_t, [math.sqrt(self.data_y[0][i] ** 2 + self.data_y[1][i] ** 2 + self.data_y[2][i] ** 2) for i in range(self.length)])
@@ -304,6 +317,7 @@ class Graphics:
             plt.show()
 
     def display_m(self, separate=False, useless=True, show=True):
+        """affiche l'évolution de la masse de la fusée dans le temps"""
         self.update_graphics()
         if not separate:
             plt.plot(self.data_t, self.data_y[6])

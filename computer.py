@@ -160,7 +160,6 @@ class Computer:
         if delta > 0:
             self.Pe = (-self.environment.G * self.environment.M_earth + math.sqrt(delta)) / (np.linalg.norm(V) ** 2 - 2 * self.environment.G * self.environment.M_earth / r)
             self.Ap = (-self.environment.G * self.environment.M_earth - math.sqrt(delta)) / (np.linalg.norm(V) ** 2 - 2 * self.environment.G * self.environment.M_earth / r)
-            # print(self.Pe, " ............... ", self.Ap)
         else:
             self.Pe = 0
             self.Ap = 0
@@ -244,7 +243,6 @@ class Computer:
         if delta > 0:
             self.Pe = (-self.environment.G * self.environment.M_earth + math.sqrt(delta)) / (np.linalg.norm(V) ** 2 - 2 * self.environment.G * self.environment.M_earth / r)
             self.Ap = (-self.environment.G * self.environment.M_earth - math.sqrt(delta)) / (np.linalg.norm(V) ** 2 - 2 * self.environment.G * self.environment.M_earth / r)
-            # print(self.Pe, " ............... ", self.Ap)
         else:
             self.Pe = 0
             self.Ap = 0
@@ -308,7 +306,6 @@ class Computer:
         if delta > 0:
             self.Pe = (-self.environment.G * self.environment.M_earth + math.sqrt(delta)) / (np.linalg.norm(V) ** 2 - 2 * self.environment.G * self.environment.M_earth / r)
             self.Ap = (-self.environment.G * self.environment.M_earth - math.sqrt(delta)) / (np.linalg.norm(V) ** 2 - 2 * self.environment.G * self.environment.M_earth / r)
-            # print(self.Pe, " ............... ", self.Ap)
         else:
             self.Pe = 0
             self.Ap = 0
@@ -382,12 +379,12 @@ class Computer:
             else:
                 print("Arret du moteur après " + str(self.t_stop) + "s")
                 self.rocket.remove_fuel(self.t_stop - t_0)
-                while self.solution[-1].t[-2] >= self.t_stop:
+                while self.solution[-1].t[-2] >= self.t_stop and len(self.solution[-1].t) > 2:
                     self.solution[-1].t = np.delete(self.solution[-1].t, -1)
                     self.solution[-1].y = np.delete(self.solution[-1].y, -1, axis=1)
                 for j in range(7):
                     Y[j] = self.solution[i].y[j][-1]
-                a = (self.Pe + self.Ap) / 2
+                a = abs(self.Pe + self.Ap) / 2
                 t_0 = self.solution[-1].t[-1]
                 T = 1.1 * 2 * math.pi * math.sqrt((a ** 3) / (self.environment.G * self.environment.M_earth))
                 self.solution.append(sc.solve_ivp(self.free_fall, (t_0, T + t_0), Y, vectorized=False, max_step=T / 1000))
@@ -402,8 +399,8 @@ class Computer:
                 delta_v = abs(v_Pe_circular - v_Pe)
                 delta_t = (1 - math.e ** (-delta_v * self.rocket.C / self.rocket.stage[-1].P)) * self.solution[-1].y[6][-1] / self.rocket.C
                 t_0 = t_Pe - delta_t / 2
-                T = delta_t * 1.2
-                while self.solution[-1].t[-2] >= t_0:
+                T = delta_t
+                while self.solution[-1].t[-2] >= t_0 and len(self.solution[-1].t) > 2:
                     self.solution[-1].t = np.delete(self.solution[-1].t, -1)
                     self.solution[-1].y = np.delete(self.solution[-1].y, -1, axis=1)
                 for j in range(7):
@@ -423,7 +420,7 @@ class Computer:
         # T = 6000
         T = 8500
         # Calcul et résolution de l'équation différentielle
-        self.solution.append(sc.solve_ivp(self.test_launch, (t_0, T + t_0), Y, vectorized=False, max_step=T / 1000))
+        self.solution.append(sc.solve_ivp(self.free_fall, (t_0, T + t_0), Y, vectorized=False, max_step=T / 1000))
         for j in range(7):
             Y[j] = self.solution[-1].y[j][-1]
         self.separation_time.append(t_0 + T)

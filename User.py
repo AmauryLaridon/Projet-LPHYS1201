@@ -13,5 +13,6 @@ pc.launch([5, -52])
 
 GUI = Graphics(pc)
 GUI.display_3D_animation(GUI.animation)
+GUI.display_3D_animation(GUI.animation2)
 GUI.display_2D_animation(GUI.animation_2D)
 GUI.display_multiple_at_once([["plane", "h"], ["g", "m"]], True, False, False)

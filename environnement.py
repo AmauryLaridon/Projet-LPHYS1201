@@ -81,7 +81,7 @@ class Environment:
         self.T_rot = 86164
         self.freq_rot = 1 / self.T_rot
 
-        print("Earth is now the environment")
+        print("Vous êtes sur Terre")
 
     def Kerbin(self):
         self.G = 6.6743e-11
@@ -94,4 +94,4 @@ class Environment:
         self.T_rot = 21549
         self.freq_rot = 1 / self.T_rot
 
-        print("Kerbin is now the environment")
+        print("Vous êtes sur Kerbin")

@@ -36,7 +36,16 @@ class Rocket:
 
     # -------------------------------CONSTRUCTION DE LA FUSEE--------------------------------- #
     def add_stage(self, stage_type, stage_name, M_empty, M_fuel, P, C_A, C):
-        """ajoute une étage à la fusée en partant de la charge utile (le haut)"""
+        """ajoute une étage à la fusée en partant de la charge utile (le haut)
+        param:  -- stage_type: string définissant le type d'étage soit "payload", "stage", "booster"
+            - le premier étage ajouté doit toujour etre de type payload
+            - on ne peut pas ajouter de booster sur des booster
+                -- stage_name: string, c'est juste le nom de l'étage
+                -- M_empty: int or float, correspond à la masse de l'étage sans M_fuel en kilogramme
+                -- M_fuel: int or float, correspond à la masse de fuel dans l'étages en kilogramme
+                -- P: int or float, puissance des moteurs en newton
+                -- C_A : int or float, coefficient de frottement
+                -- C : int or float, débit de perte massique en kilogramme par seconde"""
         if len(self.stage) == 0:
             if stage_type != 'payload':
                 print(txt_to_print + "\nBienvenue dans ce programme permettant de simuler la mise en orbite d'une fusée!\n" + txt_to_print)
@@ -63,8 +72,7 @@ class Rocket:
             self.P_tot += new_stage.P
 
     def remove_stage(self):
-        """supprime le dernier étage de la fusée. Fonction destinée à l'utilisateur
-           si celui-ci se trompe dans son montage """
+        """supprime le dernier étage de la fusée. Fonction destinée à l'utilisateur si celui-ci se trompe dans son montage """
         if len(self.stage) == 0:
             print("Pour supprimer un étage il faudrait déja qu'il y en ai un.")
         else:
