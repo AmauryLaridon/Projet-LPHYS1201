@@ -30,7 +30,7 @@ Tout d'abord, un bref aperçu sur la structure des fichiers. Ils sont aux nombre
                        du premier vol. En effet il a été choisi de n'enregistrer que les données du premier vol afin de ne pas
                        surcharger le temps de calcul et d'écriture.
    - User.py          : Seul fichier pour lequel vous devez vous soucier. Si vous souhaitez lancer une autre fusée vous devez
-                       simplement changé dans l'instance de rocket l'appel de la fonction de construction de la fusée souhaitée.
+                       simplement changer dans l'instance de rocket l'appel de la fonction de construction de la fusée souhaitée.
                        De plus si vous souhaitez changer la zone de lancement vous devez simplement donner les coordonnées géo-
                        graphiques de votre jardin si tel est votre désir, suivant la convention latitude/longitude en degré, coordonnées à remplacer dans l'argument de pc.launch([latitude, longitude])
                        
