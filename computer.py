@@ -368,7 +368,7 @@ class Computer:
             t_0 += T
             T = self.rocket.stage_time()
             # Calcul et résolution de l'équation différentielle
-            self.solution.append(sc.solve_ivp(self.test_launch, (t_0, T + t_0), Y, vectorized=False, max_step=T / 500))
+            self.solution.append(sc.solve_ivp(self.test_launch, (t_0, T + t_0), Y, vectorized=False, max_step=T / 500, dense_output=True))
             # vérifie si il faut découpler ou pas (et découple si il faut)
             if self.t_stop == 0:
                 # Découplage une fois le temps de l'étage courant atteint
@@ -388,7 +388,7 @@ class Computer:
                 a = abs(self.Pe + self.Ap) / 2
                 t_0 = self.solution[-1].t[-1]
                 T = 1.1 * 2 * math.pi * math.sqrt((a ** 3) / (self.environment.G * self.environment.M_earth))
-                self.solution.append(sc.solve_ivp(self.free_fall, (t_0, T + t_0), Y, vectorized=False, max_step=T / 1000))
+                self.solution.append(sc.solve_ivp(self.free_fall, (t_0, T + t_0), Y, vectorized=False, max_step=T / 1000, dense_output=True))
                 dist = self.Pe
                 for j in range(len(self.solution[-1].t)):
                     if abs(math.sqrt(sum([self.solution[-1].y[0][j]**2 + self.solution[-1].y[1][j]**2 + self.solution[-1].y[2][j]**2])) - self.Pe) <= dist:
@@ -406,7 +406,7 @@ class Computer:
                     self.solution[-1].y = np.delete(self.solution[-1].y, -1, axis=1)
                 for j in range(7):
                     Y[j] = self.solution[-1].y[j][-1]
-                self.solution.append(sc.solve_ivp(self.circularisation, (t_0, t_0 + T), Y, vectorized=False, max_step=T / 100))
+                self.solution.append(sc.solve_ivp(self.circularisation, (t_0, t_0 + T), Y, vectorized=False, max_step=T / 100, dense_output=True))
                 print("Phase de circularisation!")
                 print("Découplage du " + self.rocket.stage[-1].name + " après :" + str(T + t_0) + "s")
                 self.rocket.decouple()
@@ -421,7 +421,7 @@ class Computer:
         # T = 6000
         T = 8500
         # Calcul et résolution de l'équation différentielle
-        self.solution.append(sc.solve_ivp(self.free_fall, (t_0, T + t_0), Y, vectorized=False, max_step=T / 1000))
+        self.solution.append(sc.solve_ivp(self.free_fall, (t_0, T + t_0), Y, vectorized=False, max_step=T / 1000, dense_output=True))
         for j in range(7):
             Y[j] = self.solution[-1].y[j][-1]
         self.separation_time.append(t_0 + T)
